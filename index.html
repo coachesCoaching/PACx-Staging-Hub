@@ -4,113 +4,189 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PACx Staging Hub</title>
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React + ReactDOM CDN -->
+  <!-- React + ReactDOM UMD -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel so JSX works without a build step -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-gray-50">
   <div id="root"></div>
 
-  <script type="text/javascript">
-    const { useState, useEffect, useMemo } = React;
+  <!-- App -->
+  <script type="text/babel" data-presets="react,env">
+    const { useState, useMemo } = React;
 
-    /*********************** Seed Data ************************/
+    // MVP tiles for the home screen
     const MVP_LINKS = [
-      { id: "aaa", title: "AAA Flow", desc: "Awareness → Action → Achievement", anchor: "#demo-aaa" },
-      { id: "lll", title: "Lag/Lead/Lift Tracker", desc: "Goals, weekly leads, lift habits", anchor: "#demo-lll" },
-      { id: "modes", title: "PACx Direct & Teams", desc: "Single + Multiplayer", anchor: "#demo-modes" },
-      { id: "rel", title: "Relational Currency WOW!", desc: "Deposits by client type", anchor: "#demo-rel" },
-      { id: "free", title: "Free Resources", desc: "Self 360 · MindScan · Success Questionnaire", anchor: "#demo-free" },
-      { id: "game", title: "Gamification", desc: "Coins · Streaks · Badges", anchor: "#demo-game" },
-      { id: "lib", title: "Resource Library", desc: "Docs · Playbooks · Videos", anchor: "#demo-lib" },
-      { id: "vmap", title: "V-MAP", desc: "Living one-page business plan", anchor: "#demo-vmap" },
+      { id: "aaa",   title: "AAA Flow",                 desc: "Awareness → Action → Achievement", anchor: "#demo-aaa" },
+      { id: "lll",   title: "Lag/Lead/Lift Tracker",    desc: "Goals, weekly leads, lift habits",  anchor: "#demo-lll" },
+      { id: "modes", title: "PACx Direct & Teams",      desc: "Single + Multiplayer",              anchor: "#demo-modes" },
+      { id: "rel",   title: "Relational Currency WOW!", desc: "Deposits by client type",           anchor: "#demo-rel" },
+      { id: "free",  title: "Free Resources",           desc: "Self 360 · MindScan · Questionnaire", anchor: "#demo-free" },
+      { id: "game",  title: "Gamification",             desc: "Coins · Streaks · Badges",          anchor: "#demo-game" },
+      { id: "lib",   title: "Resource Library",         desc: "Docs · Playbooks · Videos",         anchor: "#demo-lib" },
+      { id: "vmap",  title: "V-MAP",                    desc: "Living one-page business plan",     anchor: "#demo-vmap" },
     ];
 
     const DEFAULT_TEAMS = ["Development", "Marketing", "Operations", "Financial"];
     const DEFAULT_PLAYERS = [
-      { id: "p1", name: "Alan Graham", team: "Development", avatar: "🕺", lag: 88, lead: 92, lift: 96, dials: 3, notes: [] },
-      { id: "p2", name: "Reggie Lawrence", team: "Marketing", avatar: "🕺", lag: 90, lead: 90, lift: 95, dials: 2, notes: [] },
-      { id: "p3", name: "Rich Campe", team: "Operations", avatar: "🧔", lag: 91, lead: 93, lift: 98, dials: 3, notes: [] },
-      { id: "p4", name: "Jon Zieve", team: "Financial", avatar: "🧔🏻", lag: 85, lead: 88, lift: 92, dials: 2, notes: [] },
-      { id: "p5", name: "Drake Lewis", team: "Marketing", avatar: "🧍", lag: 70, lead: 74, lift: 80, dials: 4, notes: [] },
-      { id: "p6", name: "Dave Erland", team: "Operations", avatar: "🧑‍🦲", lag: 56, lead: 60, lift: 52, dials: 1, notes: [] },
-      { id: "p7", name: "Nick Davies", team: "Development", avatar: "👨‍🦳", lag: 49, lead: 55, lift: 45, dials: 4, notes: [] },
-      { id: "p8", name: "Joshua Greco", team: "Financial", avatar: "🧔🏼", lag: 18, lead: 22, lift: 20, dials: 5, notes: [] },
+      { id: "p1", name: "Alan Graham",     team: "Development", avatar: "🕺",  lag: 88, lead: 92, lift: 96, dials: 3, notes: [] },
+      { id: "p2", name: "Reggie Lawrence", team: "Marketing",   avatar: "🕺",  lag: 90, lead: 90, lift: 95, dials: 2, notes: [] },
+      { id: "p3", name: "Rich Campe",      team: "Operations",   avatar: "🧔",  lag: 91, lead: 93, lift: 98, dials: 3, notes: [] },
+      { id: "p4", name: "Jon Zieve",       team: "Financial",    avatar: "🧔🏻", lag: 85, lead: 88, lift: 92, dials: 2, notes: [] },
+      { id: "p5", name: "Drake Lewis",     team: "Marketing",    avatar: "🧍",  lag: 70, lead: 74, lift: 80, dials: 4, notes: [] },
+      { id: "p6", name: "Dave Erland",     team: "Operations",   avatar: "🧑‍🦲",lag: 56, lead: 60, lift: 52, dials: 1, notes: [] },
+      { id: "p7", name: "Nick Davies",     team: "Development",  avatar: "👨‍🦳",lag: 49, lead: 55, lift: 45, dials: 4, notes: [] },
+      { id: "p8", name: "Joshua Greco",    team: "Financial",    avatar: "🧔🏼", lag: 18, lead: 22, lift: 20, dials: 5, notes: [] },
     ];
 
-    const clampPct = (n) => Math.max(0, Math.min(100, Math.round(n)));
-    const scoreFor = (p, metric) => {
-      if (metric === "Lag") return p.lag;
-      if (metric === "Lead") return p.lead;
-      if (metric === "Lift") return p.lift;
-      return Math.round((p.lag + p.lead + p.lift) / 3);
-    };
+    const clamp = n => Math.max(0, Math.min(100, Math.round(n)));
+    const scoreFor = (p, metric) => (
+      metric === "Lag" ? p.lag :
+      metric === "Lead" ? p.lead :
+      metric === "Lift" ? p.lift :
+      Math.round((p.lag + p.lead + p.lift) / 3)
+    );
 
-    function Badge({ children }) {
-      return <span className="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">{children}</span>;
-    }
+    const Badge = ({ children }) => (
+      <span className="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">{children}</span>
+    );
 
-    function ProgressBar({ value }) {
-      const clamped = clampPct(value);
-      return (
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div className="h-2 bg-black transition-all" style={{ width: clamped + "%" }} />
-        </div>
-      );
-    }
+    const Bar = ({ value }) => (
+      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-black" style={{ width: clamp(value) + "%" }} />
+      </div>
+    );
 
-    function PacxStagingHub() {
+    function App() {
       const [players, setPlayers] = useState(DEFAULT_PLAYERS);
       const [teams, setTeams] = useState(DEFAULT_TEAMS);
       const [metric, setMetric] = useState("All");
-      const [teamFilter, setTeamFilter] = useState("All");
-      const [showPlayerId, setShowPlayerId] = useState(null);
-      const [huddleAgenda, setHuddleAgenda] = useState("");
+      const [team, setTeam] = useState("All");
+      const [saved, setSaved] = useState([]);
+      const [viewName, setViewName] = useState("");
+      const [agenda, setAgenda] = useState("");
       const [vmap, setVmap] = useState({ vision:"", mission:"", values:"", lag:"", strategies:"", projects:"", leads:"" });
 
-      const filteredPlayers = useMemo(() =>
-        players.filter((p) => teamFilter === "All" || p.team === teamFilter)
-               .sort((a,b) => scoreFor(b,metric)-scoreFor(a,metric)), [players, teamFilter, metric]);
-      const totalDials = useMemo(() => filteredPlayers.reduce((acc,p)=>acc+(p.dials||0),0), [filteredPlayers]);
+      const filtered = useMemo(
+        () => players.filter(p => team === "All" || p.team === team)
+                     .sort((a,b) => scoreFor(b,metric) - scoreFor(a,metric)),
+        [players, team, metric]
+      );
+      const totalDials = useMemo(() => filtered.reduce((a,p) => a + (p.dials||0), 0), [filtered]);
+
+      const addPlayer = () => {
+        const name = document.getElementById("np-name").value.trim();
+        const teamSel = document.getElementById("np-team").value.trim();
+        const avatar = document.getElementById("np-avatar").value.trim() || "👤";
+        if (!name || !teamSel) return;
+        setPlayers(p => [...p, { id: "p"+(p.length+1), name, team: teamSel, avatar, lag:50, lead:50, lift:50, dials:0, notes:[] }]);
+        document.getElementById("np-name").value="";
+        document.getElementById("np-team").value="";
+        document.getElementById("np-avatar").value="";
+      };
+      const addTeam = () => {
+        const t = document.getElementById("new-team").value.trim();
+        if (!t || teams.includes(t)) return;
+        setTeams(x => [...x, t]);
+        document.getElementById("new-team").value="";
+      };
+      const saveView = () => {
+        const v = { id: Date.now()+"", name: viewName || `${metric} • ${team}`, metric, team };
+        setSaved(s => [v, ...s]);
+        setViewName("");
+      };
 
       return (
         <div className="mx-auto max-w-6xl p-4 md:p-6">
-          <header className="sticky top-0 z-10 mb-6 bg-white/80 backdrop-blur p-4 border-b flex justify-between">
-            <h1 className="text-lg sm:text-2xl font-bold">PACx Staging Hub</h1>
-            <div className="flex gap-2 text-sm">
-              <Badge>Total Dials: {totalDials}</Badge>
-              <Badge>Metric: {metric}</Badge>
+          {/* Header */}
+          <header className="sticky top-0 z-10 mb-6 bg-white/80 backdrop-blur p-4 border-b">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-2xl border px-3 py-1 text-xs uppercase tracking-wide">PACx</div>
+                <h1 className="text-lg sm:text-2xl font-bold">Staging Hub · Demo MVPs</h1>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Badge>Total Dials: {totalDials}</Badge>
+                <Badge>Metric: {metric}</Badge>
+              </div>
             </div>
           </header>
 
+          {/* Home tiles */}
           <section className="mb-8">
-            <h2 className="text-xl font-semibold">Home · All Demo MVPs</h2>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {MVP_LINKS.map((m)=>(
-                <a key={m.id} href={m.anchor} className="rounded-2xl border p-4 hover:shadow-sm block">
-                  <div className="flex items-center justify-between">
-                    <div><p className="font-semibold">{m.title}</p><p className="text-xs text-gray-500">{m.desc}</p></div>
-                    <span>→</span>
-                  </div>
-                </a>
-              ))}
+            <div className="rounded-2xl border p-5">
+              <h2 className="text-xl font-semibold">Home · All Demo MVPs</h2>
+              <p className="text-sm text-gray-600 mt-1">Click an area to test and leave feedback.</p>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {MVP_LINKS.map(m => (
+                  <a key={m.id} href={m.anchor} className="rounded-2xl border p-4 hover:shadow-sm block">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold">{m.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{m.desc}</p>
+                      </div>
+                      <span>→</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
             </div>
           </section>
 
+          {/* Filters */}
+          <section className="mb-6">
+            <div className="rounded-2xl border p-4">
+              <div className="flex flex-wrap gap-3 items-end">
+                <div>
+                  <label className="text-xs text-gray-500">Metric</label>
+                  <select value={metric} onChange={e=>setMetric(e.target.value)} className="border rounded px-2 py-1 text-sm ml-2">
+                    {["All","Lag","Lead","Lift"].map(m => <option key={m}>{m}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Team</label>
+                  <select value={team} onChange={e=>setTeam(e.target.value)} className="border rounded px-2 py-1 text-sm ml-2">
+                    <option>All</option>
+                    {teams.map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input value={viewName} onChange={e=>setViewName(e.target.value)} placeholder="Save view as…" className="border rounded px-2 py-1 text-sm"/>
+                  <button onClick={saveView} className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">Save View</button>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {saved.map(v => (
+                    <button key={v.id} onClick={()=>{setMetric(v.metric); setTeam(v.team);}} className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">{v.name}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Stack rank */}
           <section id="demo-lll" className="mb-8">
-            <h2 className="text-xl font-semibold mb-2">Avatar Health · Stack Rank</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xl font-semibold">Avatar Health · Stack Rank</h2>
+              <Badge>{metric === "All" ? "Combined" : metric} · {team === "All" ? "All Teams" : team}</Badge>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredPlayers.map((p, idx)=>(
-                <div key={p.id} className="rounded-xl border p-4 flex items-center gap-4">
-                  <div className="text-3xl">{p.avatar}</div>
+              {filtered.map((p, idx) => (
+                <div key={p.id} className="text-left rounded-xl border p-4 flex items-center gap-4">
+                  <div className="text-3xl" aria-hidden>{p.avatar}</div>
                   <div className="flex-1">
-                    <div className="flex justify-between"><h3 className="font-semibold">{idx+1}. {p.name}</h3><Badge>{p.dials} Dials</Badge></div>
-                    <div className="grid grid-cols-3 gap-3 text-sm mt-2">
-                      <div><div className="flex justify-between"><span>Lag</span><span>{p.lag}%</span></div><ProgressBar value={p.lag}/></div>
-                      <div><div className="flex justify-between"><span>Lead</span><span>{p.lead}%</span></div><ProgressBar value={p.lead}/></div>
-                      <div><div className="flex justify-between"><span>Lift</span><span>{p.lift}%</span></div><ProgressBar value={p.lift}/></div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">{idx + 1}. {p.name}</h3>
+                      <Badge>{p.dials ?? 0} Dials</Badge>
+                    </div>
+                    <p className="text-xs text-gray-500">{p.team}</p>
+                    <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
+                      <div><div className="flex justify-between"><span>Lag</span><span>{p.lag}%</span></div><Bar value={p.lag}/></div>
+                      <div><div className="flex justify-between"><span>Lead</span><span>{p.lead}%</span></div><Bar value={p.lead}/></div>
+                      <div><div className="flex justify-between"><span>Lift</span><span>{p.lift}%</span></div><Bar value={p.lift}/></div>
                     </div>
                   </div>
                 </div>
@@ -118,29 +194,68 @@
             </div>
           </section>
 
-          <section id="demo-modes" className="mb-8">
-            <h2 className="text-xl font-semibold">Coach Huddle Planner</h2>
-            <textarea value={huddleAgenda} onChange={(e)=>setHuddleAgenda(e.target.value)}
-              className="w-full border rounded p-2 text-sm mt-2" placeholder="Agenda for next Huddle…" rows={4}></textarea>
-          </section>
-
-          <section id="demo-vmap" className="mb-8">
-            <h2 className="text-xl font-semibold">V-MAP One Page Plan</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-              {Object.entries(vmap).map(([key,val])=>(
-                <div key={key} className="rounded-xl border p-3">
-                  <p className="font-medium capitalize">{key}</p>
-                  <textarea value={val} onChange={(e)=>setVmap({...vmap,[key]:e.target.value})}
-                    className="mt-2 w-full border rounded p-2 text-sm" rows={3} />
-                </div>
-              ))}
+          {/* Add Player / Team */}
+          <section className="mb-10">
+            <div className="rounded-2xl border p-4">
+              <h3 className="font-semibold">Add Player / Special Team</h3>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <input id="np-name" placeholder="Name" className="border rounded px-2 py-1 text-sm" />
+                <select id="np-team" className="border rounded px-2 py-1 text-sm">
+                  <option value="">Team</option>
+                  {teams.map(t => <option key={t}>{t}</option>)}
+                </select>
+                <input id="np-avatar" placeholder="Avatar emoji" className="border rounded px-2 py-1 text-sm w-24" />
+                <button onClick={addPlayer} className="px-3 py-1 border rounded bg-black text-white text-sm">Add Player</button>
+                <span className="mx-2 text-gray-400">/</span>
+                <input id="new-team" placeholder="New team name" className="border rounded px-2 py-1 text-sm" />
+                <button onClick={addTeam} className="px-3 py-1 border rounded text-sm hover:bg-gray-50">Add Team</button>
+              </div>
             </div>
           </section>
+
+          {/* Coach Huddle */}
+          <section id="demo-modes" className="mb-10">
+            <div className="rounded-2xl border p-4">
+              <h2 className="text-xl font-semibold">Coach Huddle Planner</h2>
+              <p className="text-xs text-gray-500">Set agenda in advance; paste Fathom link; attribute actions later.</p>
+              <textarea value={agenda} onChange={e=>setAgenda(e.target.value)} placeholder="Agenda for next Huddle…" className="w-full border rounded p-2 text-sm mt-3" rows={4} />
+            </div>
+          </section>
+
+          {/* V-MAP */}
+          <section id="demo-vmap" className="mb-14">
+            <div className="rounded-2xl border p-4">
+              <h2 className="text-xl font-semibold">V-MAP · Virtual Momentum Action Plan</h2>
+              <p className="text-xs text-gray-500">Living, editable one-page plan tied to game metrics.</p>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  ["Vision","vision"],["Mission","mission"],["Values","values"],["Lag KPIs","lag"],
+                  ["Strategies","strategies"],["Projects","projects"],["Lead Indicators","leads"],
+                ].map(([label,key]) => (
+                  <div key={key} className="rounded-xl border p-3">
+                    <div className="flex items-center justify-between"><p className="font-medium">{label}</p></div>
+                    <textarea value={vmap[key]} onChange={e=>setVmap({...vmap,[key]:e.target.value})}
+                              placeholder={`${label}…`} className="mt-2 w-full border rounded p-2 text-sm" rows={4}/>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <footer className="mb-8">
+            <div className="rounded-2xl border p-4 flex flex-wrap items-center gap-3 justify-between">
+              <div className="text-sm text-gray-600">Prototype · Staging Hub · All demos in one link · Simple & motivating</div>
+              <div className="flex items-center gap-2">
+                <a href="#demo-aaa" className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">Go to AAA</a>
+                <a href="#demo-vmap" className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">Edit V-MAP</a>
+              </div>
+            </div>
+          </footer>
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<PacxStagingHub />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 </body>
 </html>
