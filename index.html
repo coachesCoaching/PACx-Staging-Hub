@@ -2,10 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PACx · Staging Hub · Demo MVPs</title>
 
   <!-- Tailwind (CDN) -->
@@ -28,7 +25,7 @@
     }
   </script>
 
-  <!-- React (no build) + Babel for tiny JSX helpers -->
+  <!-- React + ReactDOM + Babel -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -37,23 +34,22 @@
 <body class="bg-[#0b1220] text-white">
   <div id="root"></div>
 
-  <script type="text/babel">
+  <!-- App Code -->
+  <script type="text/babel" data-presets="react,env">
     const { useEffect, useMemo, useState } = React;
 
-    // ---- Demo registry (keys + labels) ----
+    // ---- Demo registry ----
     const DEMOS = [
       { key: "mvp",        title: "PACx MVP Launch",            desc: "Play the ultimate PACx game" },
       { key: "mobile",     title: "PACx Mobile — Tap To Run",   desc: "Mobile quick start" },
       { key: "minimal",    title: "PACx Minimal Game Flow",     desc: "Simple + motivating" },
       { key: "wow",        title: "Ideal Client WOW Segmentation", desc: "Segment + Playbook" },
-      { key: "sow",        title: "SOW Builder",                 desc: "Build agreements faster" },
-      { key: "library",    title: "Resource Library",            desc: "Docs, Playbooks, Videos" },
-      // New tiles:
-      { key: "internal",   title: "PACx Internal Game",          desc: "Our team’s LAG · LEAD · LIFT" },
-      { key: "onboarding", title: "PACx Onboarding",             desc: "ProAdvisorCoach onboarding" },
+      { key: "sow",        title: "SOW Builder",                desc: "Build agreements faster" },
+      { key: "library",    title: "Resource Library",           desc: "Docs, Playbooks, Videos" },
+      { key: "internal",   title: "PACx Internal Game",         desc: "Our team’s LAG · LEAD · LIFT" },
+      { key: "onboarding", title: "PACx Onboarding",            desc: "ProAdvisorCoach onboarding" },
     ];
 
-    // ---- storage helpers ----
     const LS_KEY = "pacx_demo_links_v2";
 
     async function fetchJSON(path) {
@@ -82,7 +78,7 @@
     function downloadJSON(obj, filename = "demos.json") {
       const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
       const url  = URL.createObjectURL(blob);
-      const a   = document.createElement("a");
+      const a    = document.createElement("a");
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
@@ -91,7 +87,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // ---- components ----
     function Tile({ title, desc, link }) {
       return (
         <div className="rounded-2xl border border-stroke bg-card p-4 md:p-5 flex items-center justify-between">
@@ -160,19 +155,16 @@
       const [repoConfig, setRepoConfig] = useState(null);
       const [links, setLinks] = useState(loadLocal());
 
-      // load demos.json from repo (if exists)
       useEffect(() => {
         (async () => {
           const cfg = await fetchJSON("./demos.json");
           if (cfg && typeof cfg === "object") {
             setRepoConfig(cfg);
-            // Merge: local wins while you edit, repo acts as default
             setLinks(prev => ({ ...cfg, ...prev }));
           }
         })();
       }, []);
 
-      // persist local edits
       useEffect(() => { saveLocal(links); }, [links]);
 
       return (
