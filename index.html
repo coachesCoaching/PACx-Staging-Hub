@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PACx Staging Hub</title>
+
   <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -13,321 +14,106 @@
           colors: {
             ink: "#0f172a",
             card: "rgba(255,255,255,.06)",
-            stroke: "rgba(148,163,184,.25)"
+            stroke: "rgba(148,163,184,.25)",
           }
         }
       }
     }
   </script>
-  <!-- React + ReactDOM + Babel (no build step) -->
+
+  <!-- React + ReactDOM + Babel -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-ink text-slate-100">
   <div id="root"></div>
 
-  <script type="text/babel">
-    /***********************
-     * DATA: DEMO REGISTRY *
-     ***********************/
-    // IMPORTANT: window.DEMOS (not const) so Admin Overlay can read/write.
-    window.DEMOS = [
-      { id: "mvp",   title: "PACx MVP · The Game",          desc: "Lag · Lead · Lift — live team play",         url: "" },
-      { id: "aaa",   title: "AAA Flow",                     desc: "Awareness → Action → Achievement",            url: "" },
-      { id: "lll",   title: "Lag/Lead/Lift Tracker",        desc: "Goals · weekly leads · lift habits",          url: "" },
-      { id: "modes", title: "PACx Direct & Teams",          desc: "Single + Multiplayer",                         url: "" },
-      { id: "rel",   title: "Relational Currency WOW!",     desc: "Deposits by client type",                      url: "" },
-      { id: "free",  title: "Free Resources",               desc: "Self 360 · MindScan · Questionnaire",          url: "" },
-      { id: "game",  title: "Gamification",                 desc: "Coins · Streaks · Badges",                     url: "" },
-      { id: "lib",   title: "Resource Library",             desc: "Docs · Playbooks · Videos",                    url: "" },
-      { id: "vmap",  title: "V-MAP",                        desc: "Living one-page business plan",                url: "" }
+  <!-- App -->
+  <script type="text/babel" data-presets="react,env">
+
+    const { useState } = React;
+
+    // Demo list (replace `url` with your Canva/live links)
+    const DEMOS = [
+      { id: "mvp", title: "PACx MVP Launch", desc: "Play the ultimate PACx game", url: "" },
+      { id: "tap", title: "PACx Mobile — Tap To Run", desc: "Mobile quick start", url: "" },
+      { id: "flow", title: "PACx Minimal Game Flow", desc: "Simple + motivating", url: "" },
+      { id: "wow", title: "Ideal Client WOW Segmentation", desc: "Segment + Playbook", url: "" },
+      { id: "sow", title: "SOW Builder", desc: "Build agreements faster", url: "" },
+      { id: "lib", title: "Resource Library", desc: "Docs, Playbooks, Videos", url: "" },
     ];
 
-    const STORAGE_KEY = "pacx_demo_urls_v1";
-
-    // Apply any saved URLs before the UI renders
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-      window.DEMOS = window.DEMOS.map(d => ({ ...d, url: saved[d.id] ?? d.url }));
-    } catch (e) {
-      /* noop */
-    }
-
-    /***********************
-     * APP COMPONENTS      *
-     ***********************/
-    const { useState, useMemo, useEffect } = React;
-
-    function Badge({ children }) {
+    function DemoCard({ demo }) {
       return (
-        <span className="inline-flex items-center rounded-full border border-stroke px-2 py-0.5 text-xs text-slate-300">
-          {children}
-        </span>
-      );
-    }
-
-    function Card({ title, desc, onOpen, onNewTab, disabled }) {
-      return (
-        <div className="rounded-2xl border border-stroke bg-card p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="font-semibold">{title}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={onOpen}
-                disabled={disabled}
-                className={`px-3 py-1 rounded-full border text-sm ${
-                  disabled
-                    ? "opacity-50 cursor-not-allowed border-stroke"
-                    : "hover:bg-white/10 border-stroke"
-                }`}
-              >
-                Open
-              </button>
-              <button
-                onClick={onNewTab}
-                disabled={disabled}
-                className={`px-3 py-1 rounded-full border text-sm ${
-                  disabled
-                    ? "opacity-50 cursor-not-allowed border-stroke"
-                    : "hover:bg-white/10 border-stroke"
-                }`}
-              >
-                New Tab
-              </button>
-            </div>
+        <div className="p-4 rounded-xl bg-card border border-stroke flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold">{demo.title}</h3>
+            <p className="text-sm text-slate-400">{demo.desc}</p>
           </div>
-          {disabled && (
-            <p className="text-[11px] text-slate-500 mt-2">
-              (No link yet. Add it in <em>Edit Demo Links</em>.)
-            </p>
+          {demo.url ? (
+            <a href={demo.url} target="_blank"
+               className="px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm">
+              Open
+            </a>
+          ) : (
+            <span className="text-slate-500 text-sm">No link yet</span>
           )}
         </div>
       );
     }
 
-    function IframeDemo({ url }) {
-      if (!url) {
-        return (
-          <div className="rounded-2xl border border-stroke bg-card p-6 text-sm text-slate-300">
-            Paste a link in <em>Edit Demo Links</em> (admin) to load here.
-          </div>
-        );
-      }
+    function AdminPanel({ demos, setDemos }) {
+      const [local, setLocal] = useState(demos);
+
+      const updateUrl = (i, value) => {
+        const next = [...local];
+        next[i].url = value;
+        setLocal(next);
+        setDemos(next);
+        localStorage.setItem("pacx_demos", JSON.stringify(next));
+      };
+
       return (
-        <div className="rounded-2xl border border-stroke overflow-hidden">
-          <iframe
-            src={url}
-            title="Demo"
-            className="w-full h-[72vh] bg-black"
-            referrerPolicy="no-referrer"
-          />
+        <div className="fixed top-0 right-0 w-96 h-full bg-slate-900 border-l border-stroke p-4 overflow-y-auto">
+          <h2 className="text-xl font-bold mb-4">Edit Demo Links</h2>
+          {local.map((d, i) => (
+            <div key={d.id} className="mb-3">
+              <p className="text-sm font-semibold mb-1">{d.title}</p>
+              <input
+                type="text"
+                value={d.url}
+                onChange={e => updateUrl(i, e.target.value)}
+                placeholder="Paste Canva/live link..."
+                className="w-full p-2 rounded bg-slate-800 border border-stroke text-sm"
+              />
+            </div>
+          ))}
         </div>
       );
     }
 
-    function Hub() {
-      const [activeId, setActiveId] = useState(window.DEMOS[0]?.id ?? "mvp");
-      const active = useMemo(
-        () => window.DEMOS.find(d => d.id === activeId),
-        [activeId]
-      );
+    function App() {
+      const saved = JSON.parse(localStorage.getItem("pacx_demos") || "null");
+      const [demos, setDemos] = useState(saved || DEMOS);
+
+      const isAdmin = window.location.search.includes("admin=1");
 
       return (
-        <div className="mx-auto max-w-6xl p-5 md:p-8">
-          {/* Header */}
-          <header className="mb-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-stroke px-3 py-1 text-[11px] tracking-wide">
-                  PACx
-                </div>
-                <h1 className="text-xl md:text-2xl font-bold">
-                  Staging Hub · Demo MVPs
-                </h1>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Badge>
-                  Demos: {window.DEMOS.length}
-                </Badge>
-              </div>
-            </div>
-          </header>
+        <div className="max-w-4xl mx-auto p-6 space-y-6">
+          <h1 className="text-2xl font-bold">PACx · Staging Hub · Demo MVPs</h1>
+          <p className="text-slate-400">Click a demo to open · Append <code>?admin=1</code> to URL to edit links</p>
 
-          {/* PACx MVP spotlight */}
-          <section className="mb-6">
-            <div className="rounded-2xl border border-stroke p-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="font-semibold">Prototype · Staging Hub · One link</p>
-                <p className="text-xs text-slate-400">
-                  Simple & motivating · All demos in one place
-                </p>
-              </div>
-              <button
-                onClick={() => setActiveId("mvp")}
-                className="px-4 py-1.5 rounded-full border border-stroke hover:bg-white/10 text-sm"
-              >
-                Open PACx MVP
-              </button>
-            </div>
-          </section>
+          <div className="grid gap-4">
+            {demos.map(demo => <DemoCard key={demo.id} demo={demo} />)}
+          </div>
 
-          {/* Home tiles */}
-          <section className="mb-8">
-            <div className="rounded-2xl border border-stroke p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold">Home · All Demo MVPs</h2>
-                <Badge>Metric: All</Badge>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {window.DEMOS.map(d => (
-                  <Card
-                    key={d.id}
-                    title={d.title}
-                    desc={d.desc}
-                    onOpen={() => setActiveId(d.id)}
-                    onNewTab={() => d.url && window.open(d.url, "_blank")}
-                    disabled={!d.url}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Active demo */}
-          <section className="mb-14">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">
-                {active?.title ?? "Demo"} {active?.url ? "" : "· (no link yet)"}
-              </h3>
-              {active?.url && (
-                <a
-                  href={active.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1 rounded-full border border-stroke hover:bg-white/10 text-sm"
-                >
-                  Open in new tab
-                </a>
-              )}
-            </div>
-            <IframeDemo url={active?.url} />
-          </section>
-
-          {/* Footer */}
-          <footer className="mb-10">
-            <div className="rounded-2xl border border-stroke p-4 flex items-center justify-between">
-              <div className="text-sm text-slate-300">
-                Prototype · Staging Hub · Simple & motivating
-              </div>
-              <div className="flex items-center gap-2">
-                <a href="#"
-                  onClick={(e)=>{e.preventDefault(); window.scrollTo({top:0, behavior:"smooth"});}}
-                  className="px-3 py-1 rounded-full border border-stroke hover:bg-white/10 text-sm">
-                  Back to top
-                </a>
-              </div>
-            </div>
-          </footer>
+          {isAdmin && <AdminPanel demos={demos} setDemos={setDemos} />}
         </div>
       );
     }
 
-    /***********************
-     * Mount App
-     ***********************/
-    ReactDOM.createRoot(document.getElementById("root")).render(<Hub />);
-
-    /*******************************************************
-     * ADMIN OVERLAY — Edit Demo Links (gated by ?admin=1)
-     *******************************************************/
-    (function AdminOverlay(){
-      const ADMIN_QUERY = new URLSearchParams(location.search).get("admin");
-      const ADMIN_MODE = ADMIN_QUERY === "1" || ADMIN_QUERY === "rich";
-      if (!ADMIN_MODE || !Array.isArray(window.DEMOS)) return;
-
-      function Panel(){
-        const initial = {};
-        window.DEMOS.forEach(d => initial[d.id] = d.url || "");
-        const [links, setLinks] = React.useState(initial);
-
-        function save(){
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(links));
-          alert("Saved demo links. Reloading to apply.");
-          location.reload();
-        }
-        function clearAll(){
-          localStorage.removeItem(STORAGE_KEY);
-          alert("Cleared saved links. Reloading.");
-          location.reload();
-        }
-
-        return (
-          <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-3">
-            <div className="w-[min(840px,95vw)] max-h-[85vh] overflow-auto rounded-2xl border border-stroke bg-ink p-4 md:p-5 shadow-2xl">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs border border-stroke rounded-full px-2 py-[2px]">ADMIN</span>
-                  <h3 className="text-lg font-semibold m-0">Edit Demo Links</h3>
-                </div>
-                <button onClick={()=>document.getElementById("pacx-admin-host").remove()}
-                  className="px-3 py-1 rounded-full border border-stroke hover:bg-white/10 text-sm">Close</button>
-              </div>
-              <p className="text-slate-400 text-sm mb-4">
-                Paste your **Canva share links** or live URLs. Saved to your browser (localStorage). Panel appears only with <code>?admin=1</code>.
-              </p>
-
-              <div className="grid gap-3">
-                {window.DEMOS.map(d => (
-                  <div key={d.id} className="rounded-xl border border-stroke p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium">{d.title}</div>
-                      <span className="text-[11px] border border-stroke rounded-full px-2 py-[1px]">{d.id}</span>
-                    </div>
-                    <input
-                      className="w-full rounded-lg border border-stroke bg-white/5 px-3 py-2 text-sm"
-                      placeholder="https://…"
-                      value={links[d.id] || ""}
-                      onChange={e => setLinks({...links, [d.id]: e.target.value})}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-end gap-2 mt-4">
-                <button onClick={clearAll}
-                  className="px-3 py-1 rounded-full border border-red-400/70 text-red-200 hover:bg-red-400/10 text-sm">Clear Saved Links</button>
-                <button onClick={save}
-                  className="px-3 py-1 rounded-full border border-stroke bg-slate-100 text-ink hover:bg-white text-sm font-semibold">Save Links</button>
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      function Launcher(){
-        const [open, setOpen] = React.useState(false);
-        return (
-          <>
-            <button
-              onClick={()=>setOpen(true)}
-              title="Edit Demo Links (admin)"
-              className="fixed right-4 bottom-4 z-[9998] px-4 py-2 rounded-full border border-stroke bg-ink/80 hover:bg-ink text-slate-100 text-sm">
-              Edit Demo Links
-            </button>
-            {open && <Panel/>}
-          </>
-        );
-      }
-
-      const host = document.createElement("div");
-      host.id = "pacx-admin-host";
-      document.body.appendChild(host);
-      ReactDOM.createRoot(host).render(<Launcher />);
-    })();
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 </body>
 </html>
