@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PACx Staging Hub</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>PACx · Staging Hub · Demo MVPs</title>
 
   <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,100 +18,211 @@
             ink: "#0f172a",
             card: "rgba(255,255,255,.06)",
             stroke: "rgba(148,163,184,.25)",
+            btn: "#3b82f6"
+          },
+          boxShadow: {
+            soft: "0 8px 24px rgba(2,8,23,.24)"
           }
         }
       }
     }
   </script>
 
-  <!-- React + ReactDOM + Babel -->
+  <!-- React (no build) + Babel for tiny JSX helpers -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 </head>
-<body class="bg-ink text-slate-100">
+
+<body class="bg-[#0b1220] text-white">
   <div id="root"></div>
 
-  <!-- App -->
-  <script type="text/babel" data-presets="react,env">
+  <script type="text/babel">
+    const { useEffect, useMemo, useState } = React;
 
-    const { useState } = React;
-
-    // Demo list (replace `url` with your Canva/live links)
+    // ---- Demo registry (keys + labels) ----
     const DEMOS = [
-      { id: "mvp", title: "PACx MVP Launch", desc: "Play the ultimate PACx game", url: "" },
-      { id: "tap", title: "PACx Mobile — Tap To Run", desc: "Mobile quick start", url: "" },
-      { id: "flow", title: "PACx Minimal Game Flow", desc: "Simple + motivating", url: "" },
-      { id: "wow", title: "Ideal Client WOW Segmentation", desc: "Segment + Playbook", url: "" },
-      { id: "sow", title: "SOW Builder", desc: "Build agreements faster", url: "" },
-      { id: "lib", title: "Resource Library", desc: "Docs, Playbooks, Videos", url: "" },
+      { key: "mvp",        title: "PACx MVP Launch",            desc: "Play the ultimate PACx game" },
+      { key: "mobile",     title: "PACx Mobile — Tap To Run",   desc: "Mobile quick start" },
+      { key: "minimal",    title: "PACx Minimal Game Flow",     desc: "Simple + motivating" },
+      { key: "wow",        title: "Ideal Client WOW Segmentation", desc: "Segment + Playbook" },
+      { key: "sow",        title: "SOW Builder",                 desc: "Build agreements faster" },
+      { key: "library",    title: "Resource Library",            desc: "Docs, Playbooks, Videos" },
+      // New tiles:
+      { key: "internal",   title: "PACx Internal Game",          desc: "Our team’s LAG · LEAD · LIFT" },
+      { key: "onboarding", title: "PACx Onboarding",             desc: "ProAdvisorCoach onboarding" },
     ];
 
-    function DemoCard({ demo }) {
+    // ---- storage helpers ----
+    const LS_KEY = "pacx_demo_links_v2";
+
+    async function fetchJSON(path) {
+      try {
+        const res = await fetch(path, { cache: "no-store" });
+        if (!res.ok) throw new Error("not ok");
+        return await res.json();
+      } catch {
+        return null;
+      }
+    }
+
+    function loadLocal() {
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveLocal(obj) {
+      localStorage.setItem(LS_KEY, JSON.stringify(obj));
+    }
+
+    function downloadJSON(obj, filename = "demos.json") {
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+      const url  = URL.createObjectURL(blob);
+      const a   = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // ---- components ----
+    function Tile({ title, desc, link }) {
       return (
-        <div className="p-4 rounded-xl bg-card border border-stroke flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold">{demo.title}</h3>
-            <p className="text-sm text-slate-400">{demo.desc}</p>
+        <div className="rounded-2xl border border-stroke bg-card p-4 md:p-5 flex items-center justify-between">
+          <div className="pr-4">
+            <p className="font-semibold text-lg">{title}</p>
+            <p className="text-sm text-slate-300 mt-0.5">{desc}</p>
           </div>
-          {demo.url ? (
-            <a href={demo.url} target="_blank"
-               className="px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm">
-              Open
-            </a>
-          ) : (
-            <span className="text-slate-500 text-sm">No link yet</span>
-          )}
+          {link
+            ? <a href={link} target="_blank" rel="noopener" className="px-3.5 py-1.5 rounded-lg bg-btn hover:brightness-110 transition text-sm font-medium">Open</a>
+            : <span className="text-xs text-slate-400">No link yet</span>
+          }
         </div>
       );
     }
 
-    function AdminPanel({ demos, setDemos }) {
-      const [local, setLocal] = useState(demos);
-
-      const updateUrl = (i, value) => {
-        const next = [...local];
-        next[i].url = value;
-        setLocal(next);
-        setDemos(next);
-        localStorage.setItem("pacx_demos", JSON.stringify(next));
-      };
-
+    function AdminPanel({ links, setLinks, repoConfig, onDownload, onImport }) {
       return (
-        <div className="fixed top-0 right-0 w-96 h-full bg-slate-900 border-l border-stroke p-4 overflow-y-auto">
-          <h2 className="text-xl font-bold mb-4">Edit Demo Links</h2>
-          {local.map((d, i) => (
-            <div key={d.id} className="mb-3">
-              <p className="text-sm font-semibold mb-1">{d.title}</p>
-              <input
-                type="text"
-                value={d.url}
-                onChange={e => updateUrl(i, e.target.value)}
-                placeholder="Paste Canva/live link..."
-                className="w-full p-2 rounded bg-slate-800 border border-stroke text-sm"
-              />
+        <aside className="w-full lg:w-[420px] xl:w-[480px] shrink-0">
+          <div className="sticky top-6 rounded-2xl border border-stroke bg-card p-5 space-y-4">
+            <p className="font-semibold text-lg">Edit Demo Links</p>
+            {DEMOS.map(d => (
+              <div key={d.key} className="space-y-1">
+                <p className="text-xs text-slate-300">{d.title}</p>
+                <input
+                  className="w-full rounded-lg bg-transparent border border-stroke px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-btn"
+                  placeholder="Paste Canvas/live link..."
+                  value={links[d.key] || ""}
+                  onChange={e => setLinks({ ...links, [d.key]: e.target.value })}
+                />
+              </div>
+            ))}
+
+            <div className="pt-3 border-t border-stroke">
+              <p className="text-xs text-slate-400 mb-2">
+                Shared config (if present): <code className="text-slate-300">/demos.json</code> {repoConfig ? "✓ loaded" : "— not found"}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => onDownload(links)}
+                  className="px-3 py-1.5 rounded-lg border border-stroke hover:bg-white/5 text-sm"
+                >
+                  Download demos.json
+                </button>
+                <label className="px-3 py-1.5 rounded-lg border border-stroke hover:bg-white/5 text-sm cursor-pointer">
+                  Import JSON
+                  <input type="file" accept="application/json" className="hidden"
+                    onChange={onImport}/>
+                </label>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-2">
+                Upload the downloaded file to your repo root as <code>demos.json</code>
+                &nbsp;to make links universal for everyone.
+              </p>
             </div>
-          ))}
-        </div>
+          </div>
+        </aside>
       );
     }
 
     function App() {
-      const saved = JSON.parse(localStorage.getItem("pacx_demos") || "null");
-      const [demos, setDemos] = useState(saved || DEMOS);
+      const isAdmin = useMemo(() => {
+        const p = new URLSearchParams(window.location.search);
+        return p.get("admin") === "1";
+      }, []);
 
-      const isAdmin = window.location.search.includes("admin=1");
+      const [repoConfig, setRepoConfig] = useState(null);
+      const [links, setLinks] = useState(loadLocal());
+
+      // load demos.json from repo (if exists)
+      useEffect(() => {
+        (async () => {
+          const cfg = await fetchJSON("./demos.json");
+          if (cfg && typeof cfg === "object") {
+            setRepoConfig(cfg);
+            // Merge: local wins while you edit, repo acts as default
+            setLinks(prev => ({ ...cfg, ...prev }));
+          }
+        })();
+      }, []);
+
+      // persist local edits
+      useEffect(() => { saveLocal(links); }, [links]);
 
       return (
-        <div className="max-w-4xl mx-auto p-6 space-y-6">
-          <h1 className="text-2xl font-bold">PACx · Staging Hub · Demo MVPs</h1>
-          <p className="text-slate-400">Click a demo to open · Append <code>?admin=1</code> to URL to edit links</p>
+        <div className="max-w-6xl mx-auto p-5 md:p-8">
+          <header className="mb-6 md:mb-8">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl md:text-3xl font-bold">PACx · Staging Hub · Demo MVPs</h1>
+              {isAdmin ? (
+                <span className="text-xs px-2 py-1 rounded border border-stroke bg-white/5">Admin</span>
+              ) : null}
+            </div>
+            <p className="text-slate-300 text-sm mt-2">
+              Click a demo to open · Append <code>?admin=1</code> to the URL to edit links
+            </p>
+          </header>
 
-          <div className="grid gap-4">
-            {demos.map(demo => <DemoCard key={demo.id} demo={demo} />)}
+          <div className="flex flex-col lg:flex-row gap-6">
+            <main className="flex-1 space-y-4">
+              {DEMOS.map(d => (
+                <Tile
+                  key={d.key}
+                  title={d.title}
+                  desc={d.desc}
+                  link={links[d.key]}
+                />
+              ))}
+            </main>
+
+            {isAdmin &&
+              <AdminPanel
+                links={links}
+                setLinks={setLinks}
+                repoConfig={repoConfig}
+                onDownload={(obj)=>downloadJSON(obj)}
+                onImport={(e)=>{
+                  const f = e.target.files?.[0];
+                  if(!f) return;
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    try {
+                      const data = JSON.parse(reader.result);
+                      setLinks(prev => ({...prev, ...data}));
+                    } catch {}
+                  };
+                  reader.readAsText(f);
+                  e.target.value = "";
+                }}
+              />
+            }
           </div>
-
-          {isAdmin && <AdminPanel demos={demos} setDemos={setDemos} />}
         </div>
       );
     }
