@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PACx Staging Hub</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React + ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+</head>
+<body class="bg-gray-50">
+  <div id="root"></div>
+
+  <script type="text/javascript">
+    const { useState, useEffect, useMemo } = React;
+
+    /*********************** Seed Data ************************/
+    const MVP_LINKS = [
+      { id: "aaa", title: "AAA Flow", desc: "Awareness → Action → Achievement", anchor: "#demo-aaa" },
+      { id: "lll", title: "Lag/Lead/Lift Tracker", desc: "Goals, weekly leads, lift habits", anchor: "#demo-lll" },
+      { id: "modes", title: "PACx Direct & Teams", desc: "Single + Multiplayer", anchor: "#demo-modes" },
+      { id: "rel", title: "Relational Currency WOW!", desc: "Deposits by client type", anchor: "#demo-rel" },
+      { id: "free", title: "Free Resources", desc: "Self 360 · MindScan · Success Questionnaire", anchor: "#demo-free" },
+      { id: "game", title: "Gamification", desc: "Coins · Streaks · Badges", anchor: "#demo-game" },
+      { id: "lib", title: "Resource Library", desc: "Docs · Playbooks · Videos", anchor: "#demo-lib" },
+      { id: "vmap", title: "V-MAP", desc: "Living one-page business plan", anchor: "#demo-vmap" },
+    ];
+
+    const DEFAULT_TEAMS = ["Development", "Marketing", "Operations", "Financial"];
+    const DEFAULT_PLAYERS = [
+      { id: "p1", name: "Alan Graham", team: "Development", avatar: "🕺", lag: 88, lead: 92, lift: 96, dials: 3, notes: [] },
+      { id: "p2", name: "Reggie Lawrence", team: "Marketing", avatar: "🕺", lag: 90, lead: 90, lift: 95, dials: 2, notes: [] },
+      { id: "p3", name: "Rich Campe", team: "Operations", avatar: "🧔", lag: 91, lead: 93, lift: 98, dials: 3, notes: [] },
+      { id: "p4", name: "Jon Zieve", team: "Financial", avatar: "🧔🏻", lag: 85, lead: 88, lift: 92, dials: 2, notes: [] },
+      { id: "p5", name: "Drake Lewis", team: "Marketing", avatar: "🧍", lag: 70, lead: 74, lift: 80, dials: 4, notes: [] },
+      { id: "p6", name: "Dave Erland", team: "Operations", avatar: "🧑‍🦲", lag: 56, lead: 60, lift: 52, dials: 1, notes: [] },
+      { id: "p7", name: "Nick Davies", team: "Development", avatar: "👨‍🦳", lag: 49, lead: 55, lift: 45, dials: 4, notes: [] },
+      { id: "p8", name: "Joshua Greco", team: "Financial", avatar: "🧔🏼", lag: 18, lead: 22, lift: 20, dials: 5, notes: [] },
+    ];
+
+    const clampPct = (n) => Math.max(0, Math.min(100, Math.round(n)));
+    const scoreFor = (p, metric) => {
+      if (metric === "Lag") return p.lag;
+      if (metric === "Lead") return p.lead;
+      if (metric === "Lift") return p.lift;
+      return Math.round((p.lag + p.lead + p.lift) / 3);
+    };
+
+    function Badge({ children }) {
+      return <span className="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">{children}</span>;
+    }
+
+    function ProgressBar({ value }) {
+      const clamped = clampPct(value);
+      return (
+        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-2 bg-black transition-all" style={{ width: clamped + "%" }} />
+        </div>
+      );
+    }
+
+    function PacxStagingHub() {
+      const [players, setPlayers] = useState(DEFAULT_PLAYERS);
+      const [teams, setTeams] = useState(DEFAULT_TEAMS);
+      const [metric, setMetric] = useState("All");
+      const [teamFilter, setTeamFilter] = useState("All");
+      const [showPlayerId, setShowPlayerId] = useState(null);
+      const [huddleAgenda, setHuddleAgenda] = useState("");
+      const [vmap, setVmap] = useState({ vision:"", mission:"", values:"", lag:"", strategies:"", projects:"", leads:"" });
+
+      const filteredPlayers = useMemo(() =>
+        players.filter((p) => teamFilter === "All" || p.team === teamFilter)
+               .sort((a,b) => scoreFor(b,metric)-scoreFor(a,metric)), [players, teamFilter, metric]);
+      const totalDials = useMemo(() => filteredPlayers.reduce((acc,p)=>acc+(p.dials||0),0), [filteredPlayers]);
+
+      return (
+        <div className="mx-auto max-w-6xl p-4 md:p-6">
+          <header className="sticky top-0 z-10 mb-6 bg-white/80 backdrop-blur p-4 border-b flex justify-between">
+            <h1 className="text-lg sm:text-2xl font-bold">PACx Staging Hub</h1>
+            <div className="flex gap-2 text-sm">
+              <Badge>Total Dials: {totalDials}</Badge>
+              <Badge>Metric: {metric}</Badge>
+            </div>
+          </header>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold">Home · All Demo MVPs</h2>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {MVP_LINKS.map((m)=>(
+                <a key={m.id} href={m.anchor} className="rounded-2xl border p-4 hover:shadow-sm block">
+                  <div className="flex items-center justify-between">
+                    <div><p className="font-semibold">{m.title}</p><p className="text-xs text-gray-500">{m.desc}</p></div>
+                    <span>→</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+
+          <section id="demo-lll" className="mb-8">
+            <h2 className="text-xl font-semibold mb-2">Avatar Health · Stack Rank</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredPlayers.map((p, idx)=>(
+                <div key={p.id} className="rounded-xl border p-4 flex items-center gap-4">
+                  <div className="text-3xl">{p.avatar}</div>
+                  <div className="flex-1">
+                    <div className="flex justify-between"><h3 className="font-semibold">{idx+1}. {p.name}</h3><Badge>{p.dials} Dials</Badge></div>
+                    <div className="grid grid-cols-3 gap-3 text-sm mt-2">
+                      <div><div className="flex justify-between"><span>Lag</span><span>{p.lag}%</span></div><ProgressBar value={p.lag}/></div>
+                      <div><div className="flex justify-between"><span>Lead</span><span>{p.lead}%</span></div><ProgressBar value={p.lead}/></div>
+                      <div><div className="flex justify-between"><span>Lift</span><span>{p.lift}%</span></div><ProgressBar value={p.lift}/></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section id="demo-modes" className="mb-8">
+            <h2 className="text-xl font-semibold">Coach Huddle Planner</h2>
+            <textarea value={huddleAgenda} onChange={(e)=>setHuddleAgenda(e.target.value)}
+              className="w-full border rounded p-2 text-sm mt-2" placeholder="Agenda for next Huddle…" rows={4}></textarea>
+          </section>
+
+          <section id="demo-vmap" className="mb-8">
+            <h2 className="text-xl font-semibold">V-MAP One Page Plan</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              {Object.entries(vmap).map(([key,val])=>(
+                <div key={key} className="rounded-xl border p-3">
+                  <p className="font-medium capitalize">{key}</p>
+                  <textarea value={val} onChange={(e)=>setVmap({...vmap,[key]:e.target.value})}
+                    className="mt-2 w-full border rounded p-2 text-sm" rows={3} />
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<PacxStagingHub />);
+  </script>
+</body>
+</html>
