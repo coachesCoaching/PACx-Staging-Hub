@@ -1,57 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PACx Staging Hub</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PACx Staging Hub · The Ultimate Game</title>
 
-  <!-- Tailwind CSS (CDN) -->
+  <!-- Tailwind (quick styling) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- React + ReactDOM (UMD) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
-  <!-- Babel so JSX works in-browser for staging -->
+  <!-- Babel so JSX runs without a build step (perfect for GitHub Pages staging) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <meta name="description" content="PAC / PACx · Staging Hub for Demo MVPs · The Ultimate Game"/>
 </head>
 <body class="bg-gray-50">
   <div id="root"></div>
 
-  <!-- App -->
   <script type="text/babel" data-presets="react,env">
     const { useState, useMemo, useEffect } = React;
 
-    /*********************** Home Tiles ************************/
+    /************************* Data *************************/
     const MVP_LINKS = [
-      { id: "launch",  title: "PACx MVP Launch",          desc: "One hub · go live plan",                 anchor: "#demo-launch" },
-      { id: "mobile",  title: "PACx Mobile",              desc: "Tap to Run · quick demo",                anchor: "#demo-mobile" },
-      { id: "minflow", title: "PACx · Minimal Game Flow", desc: "Fast path: AAA → LLL",                   anchor: "#demo-minflow" },
-      { id: "lll",     title: "Lag/Lead/Lift Tracker",    desc: "Goals · weekly leads · lift habits",     anchor: "#demo-lll" },
-      { id: "wow",     title: "Ideal Client WOW",         desc: "Segmentation · deposits by type",        anchor: "#demo-wow" },
-      { id: "sow",     title: "SOW Helper",               desc: "Statement of Work builder",              anchor: "#demo-sow" },
-      { id: "lib",     title: "Resource Library",         desc: "Docs · Playbooks · Videos",              anchor: "#demo-lib" },
-      { id: "game",    title: "Gamification",             desc: "Coins · Streaks · Badges",               anchor: "#demo-game" },
-      { id: "modes",   title: "PACx Direct & Teams",      desc: "Single + Multiplayer",                   anchor: "#demo-modes" },
-      { id: "vmap",    title: "V-MAP",                    desc: "Living one-page business plan",          anchor: "#demo-vmap" },
-      { id: "aaa",     title: "AAA Flow",                 desc: "Awareness → Action → Achievement",       anchor: "#demo-aaa" },
+      // Highlighted FIRST tile (Ultimate Game)
+      { id: "launch",  title: "PACx MVP Launch — The Ultimate Game", desc: "Play to build PACx · Real-time Lag / Lead / Lift · 3-second win/lose clarity", anchor: "#demo-launch", kind: "game" },
+
+      // Rest of demos
+      { id: "mobile",  title: "PACx Mobile",               desc: "Tap to Run · quick mobile demo",                   anchor: "#demo-mobile", kind: "demo" },
+      { id: "minflow", title: "PACx · Minimal Game Flow",  desc: "Fast path: AAA → LLL",                              anchor: "#demo-minflow", kind: "demo" },
+      { id: "lll",     title: "Lag / Lead / Lift Tracker", desc: "Goals · weekly leads · lift habits",               anchor: "#demo-lll", kind: "tool" },
+      { id: "wow",     title: "Ideal Client WOW",          desc: "Segmentation · deposits by client type",           anchor: "#demo-wow", kind: "tool" },
+      { id: "sow",     title: "SOW Helper",                desc: "Statement of Work builder",                        anchor: "#demo-sow", kind: "tool" },
+      { id: "lib",     title: "Resource Library",          desc: "Docs · Playbooks · Videos",                        anchor: "#demo-lib", kind: "library" },
+      { id: "game",    title: "Gamification",              desc: "Coins · Streaks · Badges",                         anchor: "#demo-game", kind: "game" },
+      { id: "modes",   title: "PACx Direct & Teams",       desc: "Single + Multiplayer",                             anchor: "#demo-modes", kind: "demo" },
+      { id: "vmap",    title: "V-MAP",                     desc: "Living one-page business plan",                    anchor: "#demo-vmap", kind: "plan" },
+      { id: "aaa",     title: "AAA Flow",                  desc: "Awareness → Action → Achievement",                 anchor: "#demo-aaa", kind: "flow" },
     ];
 
-    const DEFAULT_TEAMS = ["Development", "Marketing", "Operations", "Financial"];
-
+    const DEFAULT_TEAMS = ["Development","Marketing","Operations","Financial"];
     const DEFAULT_PLAYERS = [
-      { id: "p1", name: "Alan Graham", team: "Development", avatar: "🕺", lag: 88, lead: 92, lift: 96, dials: 3, notes: [] },
-      { id: "p2", name: "Reggie Lawrence", team: "Marketing", avatar: "🕺", lag: 90, lead: 90, lift: 95, dials: 2, notes: [] },
-      { id: "p3", name: "Rich Campe", team: "Operations", avatar: "🧔", lag: 91, lead: 93, lift: 98, dials: 3, notes: [] },
-      { id: "p4", name: "Jon Zieve", team: "Financial", avatar: "🧔🏻", lag: 85, lead: 88, lift: 92, dials: 2, notes: [] },
-      { id: "p5", name: "Drake Lewis", team: "Marketing", avatar: "🧍", lag: 70, lead: 74, lift: 80, dials: 4, notes: [] },
-      { id: "p6", name: "Dave Erland", team: "Operations", avatar: "🧑‍🦲", lag: 56, lead: 60, lift: 52, dials: 1, notes: [] },
-      { id: "p7", name: "Nick Davies", team: "Development", avatar: "👨‍🦳", lag: 49, lead: 55, lift: 45, dials: 4, notes: [] },
-      { id: "p8", name: "Joshua Greco", team: "Financial", avatar: "🧔🏼", lag: 18, lead: 22, lift: 20, dials: 5, notes: [] },
+      { id: "p1", name: "Alan Graham",    team: "Development", avatar: "🕺",  lag: 88, lead: 92, lift: 96, dials: 3, notes: [] },
+      { id: "p2", name: "Reggie Lawrence",team: "Marketing",   avatar: "🕺",  lag: 90, lead: 90, lift: 95, dials: 2, notes: [] },
+      { id: "p3", name: "Rich Campe",     team: "Operations",  avatar: "🧔",  lag: 91, lead: 93, lift: 98, dials: 3, notes: [] },
+      { id: "p4", name: "Jon Zieve",      team: "Financial",   avatar: "🧔🏻", lag: 85, lead: 88, lift: 92, dials: 2, notes: [] },
+      { id: "p5", name: "Drake Lewis",    team: "Marketing",   avatar: "🧍",  lag: 70, lead: 74, lift: 80, dials: 4, notes: [] },
+      { id: "p6", name: "Dave Erland",    team: "Operations",  avatar: "🧑‍🦲",lag: 56, lead: 60, lift: 52, dials: 1, notes: [] },
+      { id: "p7", name: "Nick Davies",    team: "Development", avatar: "👨‍🦳",lag: 49, lead: 55, lift: 45, dials: 4, notes: [] },
+      { id: "p8", name: "Joshua Greco",   team: "Financial",   avatar: "🧔🏼", lag: 18, lead: 22, lift: 20, dials: 5, notes: [] },
     ];
 
-    /*********************** Helpers ************************/
-    const STORAGE_KEY = "pacx_staging_hub_inline";
+    /************************* Helpers *************************/
+    const STORAGE_KEY = "pacx_staging_hub_state_v1";
+    const FB_KEY = "pacx_feedback_v1";
+
     const clampPct = (n) => Math.max(0, Math.min(100, Math.round(n)));
     const scoreFor = (p, metric) => {
       if (metric === "Lag") return p.lag;
@@ -60,84 +65,88 @@
       return Math.round((p.lag + p.lead + p.lift) / 3);
     };
 
-    const Badge = ({ children }) => (
-      <span className="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
-        {children}
-      </span>
+    const Chip = ({children}) => (
+      <span className="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">{children}</span>
     );
 
-    const ProgressBar = ({ value }) => {
-      const clamped = clampPct(value);
-      return (
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div className="h-2 bg-black transition-all" style={{ width: `${clamped}%` }} />
-        </div>
-      );
-    };
+    const Bar = ({value}) => (
+      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-black" style={{ width: clampPct(value) + "%" }}></div>
+      </div>
+    );
 
-    /*********************** Main Component ************************/
-    function PacxStagingHub() {
-      const [players, setPlayers] = useState(() => {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return DEFAULT_PLAYERS;
-          const parsed = JSON.parse(raw);
-          return parsed.players ?? DEFAULT_PLAYERS;
-        } catch {
-          return DEFAULT_PLAYERS;
-        }
+    /************************* Feedback Store *************************/
+    function loadFeedback(){ try { return JSON.parse(localStorage.getItem(FB_KEY)) ?? []; } catch { return []; } }
+    function saveFeedback(list){ localStorage.setItem(FB_KEY, JSON.stringify(list)); }
+
+    /************************* App *************************/
+    function App(){
+      // Core state
+      const [players, setPlayers] = useState(()=> {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY))?.players ?? DEFAULT_PLAYERS; } catch { return DEFAULT_PLAYERS; }
       });
-      const [teams, setTeams] = useState(() => {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return DEFAULT_TEAMS;
-          const parsed = JSON.parse(raw);
-          return parsed.teams ?? DEFAULT_TEAMS;
-        } catch {
-          return DEFAULT_TEAMS;
-        }
+      const [teams, setTeams] = useState(()=> {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY))?.teams ?? DEFAULT_TEAMS; } catch { return DEFAULT_TEAMS; }
       });
       const [metric, setMetric] = useState("All");
       const [teamFilter, setTeamFilter] = useState("All");
+      const [showPlayerId, setShowPlayerId] = useState(null);
+
+      // V-MAP & Huddle
+      const [vmap, setVmap] = useState(()=> {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY))?.vmap ?? { vision:"", mission:"", values:"", lag:"", strategies:"", projects:"", leads:"" }; }
+        catch { return { vision:"", mission:"", values:"", lag:"", strategies:"", projects:"", leads:"" }; }
+      });
+      const [huddleAgenda, setHuddleAgenda] = useState("");
+
+      // Saved views
       const [saved, setSaved] = useState([]);
       const [newViewName, setNewViewName] = useState("");
-      const [showPlayerId, setShowPlayerId] = useState(null);
-      const [huddleAgenda, setHuddleAgenda] = useState("");
-      const [vmap, setVmap] = useState({ vision: "", mission: "", values: "", lag: "", strategies: "", projects: "", leads: "" });
 
-      useEffect(() => {
-        const payload = { players, teams, vmap };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      // Feedback
+      const [fbOpen, setFbOpen] = useState(false);
+      const [feedback, setFeedback] = useState(loadFeedback());
+      const [fbDraft, setFbDraft] = useState("");
+      const [fbContext, setFbContext] = useState("General");
+
+      // Persist core
+      useEffect(()=>{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ players, teams, vmap }));
       }, [players, teams, vmap]);
 
-      const filteredPlayers = useMemo(() => {
-        return players
-          .filter((p) => (teamFilter === "All" ? true : p.team === teamFilter))
-          .sort((a, b) => scoreFor(b, metric) - scoreFor(a, metric));
+      // Derived
+      const filteredPlayers = useMemo(()=> {
+        return [...players]
+          .filter(p => teamFilter === "All" || p.team === teamFilter)
+          .sort((a,b)=> scoreFor(b, metric) - scoreFor(a, metric));
       }, [players, teamFilter, metric]);
 
-      const totalDials = useMemo(() => filteredPlayers.reduce((acc, p) => acc + (p.dials || 0), 0), [filteredPlayers]);
+      const totalDials = useMemo(()=> filteredPlayers.reduce((a,p)=> a + (p.dials || 0), 0), [filteredPlayers]);
 
+      // Actions
       const addPlayer = (name, team, avatar) => {
-        if (!name || !team) return;
-        const id = `p${players.length + 1}`;
-        setPlayers([...players, { id, name, team, avatar: avatar || "👤", lag: 50, lead: 50, lift: 50, dials: 0, notes: [] }]);
+        if(!name || !team) return;
+        setPlayers(p => [...p, { id: "p"+(p.length+1), name, team, avatar: avatar || "👤", lag:50, lead:50, lift:50, dials:0, notes:[] }]);
       };
       const addTeam = (team) => {
-        if (!team || teams.includes(team)) return;
-        setTeams([...teams, team]);
+        if(!team || teams.includes(team)) return;
+        setTeams(t => [...t, team]);
       };
       const saveView = () => {
-        const id = `v${Date.now()}`;
-        const view = { id, name: newViewName || `${metric} • ${teamFilter}`, metric, teams: teamFilter };
-        setSaved([view, ...saved]);
-        setNewViewName("");
+        const v = { id:"v"+Date.now(), name: newViewName || `${metric} • ${teamFilter}`, metric, teams: teamFilter };
+        setSaved(s => [v, ...s]); setNewViewName("");
       };
-      const applyView = (v) => {
-        setMetric(v.metric);
-        setTeamFilter(v.teams || "All");
+      const applyView = (v) => { setMetric(v.metric); setTeamFilter(v.teams || "All"); };
+
+      // Feedback actions
+      const openFeedback = (context="General") => { setFbContext(context); setFbOpen(true); };
+      const submitFeedback = () => {
+        if(!fbDraft.trim()) return;
+        const entry = { id:"fb"+Date.now(), context: fbContext, text: fbDraft.trim(), ts: new Date().toISOString() };
+        const list = [entry, ...feedback];
+        setFeedback(list); saveFeedback(list);
+        setFbDraft(""); setFbOpen(false);
       };
-      const playerById = (id) => players.find((p) => p.id === id);
 
       return (
         <div className="mx-auto max-w-6xl p-4 md:p-6">
@@ -149,24 +158,50 @@
                 <h1 className="text-lg sm:text-2xl font-bold">Staging Hub · Demo MVPs</h1>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <Badge>Total Dials: {totalDials}</Badge>
-                <Badge>Metric: {metric}</Badge>
+                <Chip>Total Dials: {totalDials}</Chip>
+                <Chip>Metric: {metric}</Chip>
+                <button onClick={()=>openFeedback("Header")} className="text-xs underline text-gray-600 hover:text-black">💬 Feedback</button>
               </div>
             </div>
           </header>
 
-          {/* Home Hub */}
+          {/* Home Tiles */}
           <section className="mb-8">
             <div className="rounded-2xl border p-5">
               <h2 className="text-xl font-semibold">Home · All Demo MVPs</h2>
               <p className="text-sm text-gray-600 mt-1">Click an area to test and leave feedback.</p>
+
+              {/* Grid with a standout first tile */}
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {MVP_LINKS.map((m) => (
+                {/* FIRST — Ultimate Game, larger + accented */}
+                <a href={MVP_LINKS[0].anchor}
+                   className="sm:col-span-2 lg:col-span-3 block rounded-2xl border p-5 hover:shadow-sm relative overflow-hidden">
+                  <div className="absolute inset-0 pointer-events-none"
+                       style={{background: "radial-gradient(800px 300px at 10% -10%, rgba(0,0,0,0.06), transparent)"}}></div>
+                  <div className="flex items-center justify-between relative">
+                    <div>
+                      <p className="font-semibold text-lg">{MVP_LINKS[0].title}</p>
+                      <p className="text-xs text-gray-600 mt-1">{MVP_LINKS[0].desc}</p>
+                      <div className="mt-3 flex gap-2">
+                        <Chip>Ultimate Game</Chip>
+                        <Chip>Team Play</Chip>
+                        <Chip>3-Second Clarity</Chip>
+                      </div>
+                    </div>
+                    <span className="text-xl">→</span>
+                  </div>
+                </a>
+
+                {/* The rest */}
+                {MVP_LINKS.slice(1).map((m)=>(
                   <a key={m.id} href={m.anchor} className="rounded-2xl border p-4 hover:shadow-sm block">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-semibold">{m.title}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{m.desc}</p>
+                        <div className="mt-2">
+                          <span className="text-[10px] uppercase tracking-wide text-gray-500 border px-1.5 py-0.5 rounded">{m.kind || "demo"}</span>
+                        </div>
                       </div>
                       <span>→</span>
                     </div>
@@ -182,25 +217,25 @@
               <div className="flex flex-wrap gap-3 items-end">
                 <div>
                   <label className="text-xs text-gray-500">Metric</label>
-                  <select value={metric} onChange={(e) => setMetric(e.target.value)} className="border rounded px-2 py-1 text-sm ml-2">
-                    {(["All", "Lag", "Lead", "Lift"]).map((m) => <option key={m}>{m}</option>)}
+                  <select value={metric} onChange={(e)=>setMetric(e.target.value)} className="border rounded px-2 py-1 text-sm ml-2">
+                    {["All","Lag","Lead","Lift"].map(m=><option key={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-xs text-gray-500">Team</label>
-                  <select value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)} className="border rounded px-2 py-1 text-sm ml-2">
+                  <select value={teamFilter} onChange={(e)=>setTeamFilter(e.target.value)} className="border rounded px-2 py-1 text-sm ml-2">
                     <option>All</option>
-                    {teams.map((t) => <option key={t}>{t}</option>)}
+                    {teams.map(t=><option key={t}>{t}</option>)}
                   </select>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input value={newViewName} onChange={(e) => setNewViewName(e.target.value)} placeholder="Save view as…" className="border rounded px-2 py-1 text-sm" />
+                  <input value={newViewName} onChange={(e)=>setNewViewName(e.target.value)} placeholder="Save view as…" className="border rounded px-2 py-1 text-sm"/>
                   <button onClick={saveView} className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">Save View</button>
                 </div>
                 {saved.length ? (
                   <div className="flex items-center gap-2 flex-wrap">
-                    {saved.map((v) => (
-                      <button key={v.id} onClick={() => applyView(v)} className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">
+                    {saved.map(v=>(
+                      <button key={v.id} onClick={()=>applyView(v)} className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">
                         {v.name}
                       </button>
                     ))}
@@ -208,47 +243,42 @@
                 ) : (
                   <p className="text-xs text-gray-500">No saved views yet — set filters and click "Save View".</p>
                 )}
+                <button onClick={()=>openFeedback("Filters & Views")} className="text-xs underline text-gray-600 hover:text-black ml-auto">💬 Feedback</button>
               </div>
             </div>
           </section>
 
-          {/* Players Stack Rank */}
+          {/* Stack Rank */}
           <section id="demo-lll" className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xl font-semibold">Avatar Health · Stack Rank</h2>
-              <Badge>{metric === "All" ? "Combined" : metric} · {teamFilter === "All" ? "All Teams" : teamFilter}</Badge>
+              <Chip>{metric==="All"?"Combined":metric} · {teamFilter==="All"?"All Teams":teamFilter}</Chip>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredPlayers.map((p, idx) => {
-                const score = scoreFor(p, metric);
+                const overall = scoreFor(p, metric);
                 return (
-                  <button key={p.id} onClick={() => setShowPlayerId(p.id)} className="text-left rounded-xl border p-4 flex items-center gap-4 hover:shadow-sm">
+                  <button key={p.id} onClick={()=>setShowPlayerId(p.id)} className="text-left rounded-xl border p-4 flex items-center gap-4 hover:shadow-sm">
                     <div className="text-3xl" aria-hidden>{p.avatar}</div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold">{idx + 1}. {p.name}</h3>
-                        <Badge>{p.dials ?? 0} Dials</Badge>
+                        <Chip>{p.dials ?? 0} Dials</Chip>
                       </div>
                       <p className="text-xs text-gray-500">{p.team}</p>
                       <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
-                        <div>
-                          <div className="flex justify-between"><span>Lag</span><span>{p.lag}%</span></div>
-                          <ProgressBar value={p.lag} />
-                        </div>
-                        <div>
-                          <div className="flex justify-between"><span>Lead</span><span>{p.lead}%</span></div>
-                          <ProgressBar value={p.lead} />
-                        </div>
-                        <div>
-                          <div className="flex justify-between"><span>Lift</span><span>{p.lift}%</span></div>
-                          <ProgressBar value={p.lift} />
-                        </div>
+                        <div><div className="flex justify-between"><span>Lag</span><span>{p.lag}%</span></div><Bar value={p.lag}/></div>
+                        <div><div className="flex justify-between"><span>Lead</span><span>{p.lead}%</span></div><Bar value={p.lead}/></div>
+                        <div><div className="flex justify-between"><span>Lift</span><span>{p.lift}%</span></div><Bar value={p.lift}/></div>
                       </div>
-                      <div className="mt-2 text-xs text-gray-600">Overall: {score}%</div>
+                      <div className="mt-2 text-xs text-gray-600">Overall: {overall}%</div>
                     </div>
                   </button>
                 );
               })}
+            </div>
+            <div className="mt-3">
+              <button onClick={()=>openFeedback("Stack Rank")} className="text-xs underline text-gray-600 hover:text-black">💬 Feedback on Stack Rank</button>
             </div>
           </section>
 
@@ -257,38 +287,36 @@
             <div className="rounded-2xl border p-4">
               <h3 className="font-semibold">Add Player / Special Team</h3>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <input id="np-name" placeholder="Name" className="border rounded px-2 py-1 text-sm" />
+                <input id="np-name" placeholder="Name" className="border rounded px-2 py-1 text-sm"/>
                 <select id="np-team" className="border rounded px-2 py-1 text-sm">
                   <option value="">Team</option>
-                  {teams.map((t) => <option key={t}>{t}</option>)}
+                  {teams.map(t=><option key={t}>{t}</option>)}
                 </select>
-                <input id="np-avatar" placeholder="Avatar emoji" className="border rounded px-2 py-1 text-sm w-24" />
+                <input id="np-avatar" placeholder="Avatar emoji" className="border rounded px-2 py-1 text-sm w-24"/>
                 <button
-                  onClick={() => {
-                    const name = document.getElementById("np-name").value;
-                    const team = document.getElementById("np-team").value;
-                    const avatar = document.getElementById("np-avatar").value || "👤";
+                  onClick={()=>{
+                    const name = document.getElementById("np-name").value.trim();
+                    const team = document.getElementById("np-team").value.trim();
+                    const avatar = document.getElementById("np-avatar").value.trim() || "👤";
                     addPlayer(name, team, avatar);
                     document.getElementById("np-name").value = "";
                     document.getElementById("np-team").value = "";
                     document.getElementById("np-avatar").value = "";
                   }}
                   className="px-3 py-1 border rounded bg-black text-white text-sm"
-                >
-                  Add Player
-                </button>
+                >Add Player</button>
                 <span className="mx-2 text-gray-400">/</span>
-                <input id="new-team" placeholder="New team name" className="border rounded px-2 py-1 text-sm" />
+                <input id="new-team" placeholder="New team name" className="border rounded px-2 py-1 text-sm"/>
                 <button
-                  onClick={() => {
+                  onClick={()=>{
                     const v = document.getElementById("new-team").value.trim();
                     addTeam(v);
                     document.getElementById("new-team").value = "";
                   }}
                   className="px-3 py-1 border rounded text-sm hover:bg-gray-50"
-                >
-                  Add Team
-                </button>
+                >Add Team</button>
+
+                <button onClick={()=>openFeedback("Add Player / Team")} className="text-xs underline text-gray-600 hover:text-black ml-auto">💬 Feedback</button>
               </div>
             </div>
           </section>
@@ -298,54 +326,65 @@
             <div className="rounded-2xl border p-4">
               <h2 className="text-xl font-semibold">Coach Huddle Planner</h2>
               <p className="text-xs text-gray-500">Set agenda in advance; paste Fathom link; attribute actions later in Player details.</p>
-              <textarea value={huddleAgenda} onChange={(e) => setHuddleAgenda(e.target.value)} placeholder="Agenda for next Huddle…" className="w-full border rounded p-2 text-sm mt-3" rows={4} />
+              <textarea value={huddleAgenda} onChange={(e)=>setHuddleAgenda(e.target.value)} placeholder="Agenda for next Huddle…" className="w-full border rounded p-2 text-sm mt-3" rows="4"></textarea>
+              <div className="mt-2 flex items-center gap-2">
+                <input id="fathom-link" placeholder="Paste Fathom meeting link…" className="border rounded px-2 py-1 text-sm w-full"/>
+                <button onClick={()=>openFeedback("Coach Huddle")} className="text-xs underline text-gray-600 hover:text-black">💬 Feedback</button>
+              </div>
             </div>
           </section>
 
-          {/* V-MAP (One Page) */}
+          {/* V-MAP */}
           <section id="demo-vmap" className="mb-14">
             <div className="rounded-2xl border p-4">
               <h2 className="text-xl font-semibold">V-MAP · Virtual Momentum Action Plan</h2>
               <p className="text-xs text-gray-500">Living, editable one-page plan tied to game metrics.</p>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
-                  ["Vision", "vision"],
-                  ["Mission", "mission"],
-                  ["Values", "values"],
-                  ["Lag KPIs", "lag"],
-                  ["Strategies", "strategies"],
-                  ["Projects", "projects"],
-                  ["Lead Indicators", "leads"],
-                ].map(([label, key]) => (
+                  ["Vision","vision"],["Mission","mission"],["Values","values"],["Lag KPIs","lag"],
+                  ["Strategies","strategies"],["Projects","projects"],["Lead Indicators","leads"],
+                ].map(([label,key])=>(
                   <div key={key} className="rounded-xl border p-3">
                     <div className="flex items-center justify-between">
                       <p className="font-medium">{label}</p>
                     </div>
                     <textarea
                       value={vmap[key]}
-                      onChange={(e) => setVmap({ ...vmap, [key]: e.target.value })}
+                      onChange={(e)=>setVmap({...vmap, [key]: e.target.value})}
                       placeholder={`${label}…`}
                       className="mt-2 w-full border rounded p-2 text-sm"
-                      rows={4}
-                    />
+                      rows="4"
+                    ></textarea>
                   </div>
                 ))}
+              </div>
+              <div className="mt-3">
+                <button onClick={()=>openFeedback("V-MAP")} className="text-xs underline text-gray-600 hover:text-black">💬 Feedback on V-MAP</button>
               </div>
             </div>
           </section>
 
-          {/* Placeholder demo sections so tiles scroll somewhere */}
+          {/* Placeholder sections so each tile scrolls somewhere now; wire real demos later */}
           {[
-            ["demo-launch",  "PACx MVP Launch", "Master hub and go-live plan"],
-            ["demo-mobile",  "PACx Mobile", "Tap-to-Run mobile demo"],
-            ["demo-minflow", "Minimal Game Flow", "AAA → LLL fast path"],
-            ["demo-wow",     "Ideal Client WOW", "Segmentation & WOW deposits"],
-            ["demo-sow",     "SOW Helper", "Statement of Work builder"],
-          ].map(([id, title, blurb]) => (
+            ["demo-launch","PACx MVP Launch — The Ultimate Game","Play the platform to build the platform. Live Lag/Lead/Lift. 3-second clarity of win/lose."],
+            ["demo-mobile","PACx Mobile","Tap-to-Run mobile demo placeholder."],
+            ["demo-minflow","Minimal Game Flow","AAA → LLL fast path demo placeholder."],
+            ["demo-wow","Ideal Client WOW","Segmentation & WOW deposits demo placeholder."],
+            ["demo-sow","SOW Helper","Statement of Work builder demo placeholder."],
+            ["demo-lib","Resource Library","Docs · Playbooks · Videos placeholder."],
+            ["demo-game","Gamification","Coins · Streaks · Badges placeholder."],
+            ["demo-modes","PACx Direct & Teams","Single + Multiplayer placeholder."],
+            ["demo-aaa","AAA Flow","Awareness → Action → Achievement placeholder."],
+          ].map(([id,title,blurb])=>(
             <section id={id} key={id} className="mb-6">
               <div className="rounded-2xl border p-4">
-                <h2 className="text-xl font-semibold">{title}</h2>
-                <p className="text-sm text-gray-600">{blurb}</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold">{title}</h2>
+                    <p className="text-sm text-gray-600">{blurb}</p>
+                  </div>
+                  <button onClick={()=>openFeedback(title)} className="text-xs underline text-gray-600 hover:text-black">💬 Feedback</button>
+                </div>
                 <div className="mt-3 text-sm text-gray-500">
                   Placeholder content — wire this to the live demo link or embed next.
                 </div>
@@ -358,8 +397,8 @@
             <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" role="dialog" aria-modal>
               <div className="bg-white rounded-2xl w-full max-w-xl p-5">
                 {(() => {
-                  const p = playerById(showPlayerId);
-                  if (!p) return null;
+                  const p = players.find(pp => pp.id === showPlayerId);
+                  if(!p) return null;
                   const overall = scoreFor(p, "All");
                   return (
                     <div>
@@ -371,29 +410,20 @@
                             <p className="text-xs text-gray-500">{p.team}</p>
                           </div>
                         </div>
-                        <button onClick={() => setShowPlayerId(null)} className="rounded-full border px-3 py-1 text-sm">Close</button>
+                        <button onClick={()=>setShowPlayerId(null)} className="rounded-full border px-3 py-1 text-sm">Close</button>
                       </div>
 
                       <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                        <div>
-                          <div className="flex justify-between"><span>Lag</span><span>{p.lag}%</span></div>
-                          <ProgressBar value={p.lag} />
-                        </div>
-                        <div>
-                          <div className="flex justify-between"><span>Lead</span><span>{p.lead}%</span></div>
-                          <ProgressBar value={p.lead} />
-                        </div>
-                        <div>
-                          <div className="flex justify-between"><span>Lift</span><span>{p.lift}%</span></div>
-                          <ProgressBar value={p.lift} />
-                        </div>
+                        <div><div className="flex justify-between"><span>Lag</span><span>{p.lag}%</span></div><Bar value={p.lag}/></div>
+                        <div><div className="flex justify-between"><span>Lead</span><span>{p.lead}%</span></div><Bar value={p.lead}/></div>
+                        <div><div className="flex justify-between"><span>Lift</span><span>{p.lift}%</span></div><Bar value={p.lift}/></div>
                       </div>
                       <div className="mt-3 text-sm">Overall: <strong>{overall}%</strong> · Dials: <strong>{p.dials ?? 0}</strong></div>
 
                       <div className="mt-4">
                         <p className="text-sm font-medium">Recent Actions</p>
                         <ul className="list-disc pl-5 text-sm text-gray-700 mt-1 space-y-1">
-                          {(p.notes && p.notes.length ? p.notes : ["No actions yet."]).map((n, i) => <li key={i}>{n}</li>)}
+                          {(p.notes && p.notes.length ? p.notes : ["No actions yet."]).map((n,i)=><li key={i}>{n}</li>)}
                         </ul>
                       </div>
                     </div>
@@ -404,21 +434,58 @@
           )}
 
           {/* Footer */}
-          <footer className="mb-8">
+          <footer className="mb-16">
             <div className="rounded-2xl border p-4 flex flex-wrap items-center gap-3 justify-between">
-              <div className="text-sm text-gray-600">Prototype · Staging Hub · All demos in one link · Simple & motivating</div>
+              <div className="text-sm text-gray-600">
+                Prototype · PAC / PACx · All demos in one link · Simple & motivating
+              </div>
               <div className="flex items-center gap-2">
                 <a href="#demo-aaa" className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">Go to AAA</a>
                 <a href="#demo-vmap" className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">Edit V-MAP</a>
+                <button onClick={()=>openFeedback("Footer")} className="px-3 py-1 rounded-full border text-sm hover:bg-gray-50">💬 Feedback</button>
               </div>
             </div>
           </footer>
+
+          {/* Feedback Drawer */}
+          {fbOpen && (
+            <div className="fixed bottom-4 right-4 z-50 w-[min(92vw,440px)] rounded-2xl border bg-white shadow-lg">
+              <div className="border-b p-3 flex items-center justify-between">
+                <div className="text-sm font-semibold">Feedback · {fbContext}</div>
+                <button onClick={()=>setFbOpen(false)} className="text-xs border rounded px-2 py-1">Close</button>
+              </div>
+              <div className="p-3">
+                <textarea value={fbDraft} onChange={(e)=>setFbDraft(e.target.value)} className="w-full border rounded p-2 text-sm" rows="4" placeholder="What should we tweak? (typos, clarity, UI/UX, ideas)…"></textarea>
+                <div className="mt-2 flex items-center justify-between">
+                  <button onClick={submitFeedback} className="px-3 py-1 rounded bg-black text-white text-sm">Submit</button>
+                  <a href="javascript:void(0)" onClick={()=>setFeedback([]) || saveFeedback([])} className="text-xs text-gray-500 underline">Clear all feedback (local)</a>
+                </div>
+                <div className="mt-3 max-h-40 overflow-auto">
+                  {feedback.length ? (
+                    <ul className="space-y-2">
+                      {feedback.map(f=>(
+                        <li key={f.id} className="border rounded p-2">
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>{f.context}</span>
+                            <span>{new Date(f.ts).toLocaleString()}</span>
+                          </div>
+                          <div className="text-sm mt-1">{f.text}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="text-xs text-gray-500">No feedback yet.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
 
     // Mount
-    ReactDOM.createRoot(document.getElementById("root")).render(<PacxStagingHub />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
   </script>
 </body>
 </html>
