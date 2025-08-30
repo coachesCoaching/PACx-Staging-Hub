@@ -3,462 +3,232 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PACx · Staging Hub</title>
-
+  <title>PACx Staging Hub</title>
   <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- React + ReactDOM (UMD) -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: "#0f172a",
+            card: "rgba(255,255,255,.06)",
+            stroke: "rgba(148,163,184,.25)"
+          }
+        }
+      }
+    }
+  </script>
+  <!-- React + ReactDOM + Babel (no build step) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-
-  <!-- Babel so JSX works in this single-file staging site -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <style>
-    /* PACx polish */
-    body { background: #0d2147; }
-    .pacx-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.25); transform: translateY(-1px); }
-    .grad-cta { background: linear-gradient(90deg,#48e6c4,#ffda47); }
-    .tile { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10); }
-    .panel { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
-  </style>
+  <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 </head>
-
-<body class="text-white antialiased">
+<body class="bg-ink text-slate-100">
   <div id="root"></div>
 
   <script type="text/babel">
-
-    const {useState, useMemo, useEffect} = React;
-
-    /********************
-     * DEMO REGISTRY
-     * - title: shown on the tile
-     * - desc: subtitle
-     * - id:   anchor + routing id
-     * - type:
-     *    - "mvp"     -> opens the built-in PACx MVP (Lag/Lead/Lift + Huddle + V-MAP)
-     *    - "iframe"  -> embeds a live external page (Canvas share URL or any link)
-     *    - "internal"-> opens a simple internal panel (placeholder copy until we wire code)
-     * - url: (for type "iframe") — put your Canvas share link here and it will be clickable/live
-     ********************/
-    const DEMOS = [
-      { id: "mvp",      title: "PACx MVP Launch",            desc: "Lag · Lead · Lift · Huddle · V-MAP",     type: "mvp" },
-
-      { id: "mobile",   title: "PACx Mobile — Tap To Run",   desc: "Game Time flow (Let’s Go / Resume)",     type: "iframe",  url: "" },
-      { id: "minimal",  title: "PACx Minimal Game Flow",     desc: "Simple rounds · LLL loop",               type: "iframe",  url: "" },
-      { id: "wow",      title: "Ideal Client WOW Segmentation", desc: "Tier • Score • Playbook",            type: "iframe",  url: "" },
-      { id: "resources",title: "Resource Library",           desc: "Docs · Playbooks · Videos",              type: "iframe",  url: "" },
-      { id: "sow",      title: "SOW Helper",                 desc: "Guided scope + pricing",                 type: "iframe",  url: "" },
-      { id: "quiz",     title: "Quiz & Badges Bank",         desc: "Gamified learning",                      type: "iframe",  url: "" },
-      { id: "brand",    title: "Brand Kit & Components",     desc: "Tokens · UI kit · Examples",             type: "iframe",  url: "" },
-      { id: "portal",   title: "PACx Portal",                desc: "Coach / Client views",                   type: "iframe",  url: "" },
-
-      { id: "direct",   title: "PACx Direct & Teams",        desc: "Single + Multiplayer",                   type: "internal" },
-      { id: "game",     title: "Gamification",               desc: "Coins · Streaks · Badges",               type: "internal" },
-      { id: "aaa",      title: "AAA Flow",                    desc: "Awareness → Action → Achievement",      type: "internal" },
-      { id: "vmapOnly", title: "V-MAP (One-page Plan)",       desc: "Vision · Mission · Values · KPIs",       type: "internal" },
+    /***********************
+     * DATA: DEMO REGISTRY *
+     ***********************/
+    // IMPORTANT: window.DEMOS (not const) so Admin Overlay can read/write.
+    window.DEMOS = [
+      { id: "mvp",   title: "PACx MVP · The Game",          desc: "Lag · Lead · Lift — live team play",         url: "" },
+      { id: "aaa",   title: "AAA Flow",                     desc: "Awareness → Action → Achievement",            url: "" },
+      { id: "lll",   title: "Lag/Lead/Lift Tracker",        desc: "Goals · weekly leads · lift habits",          url: "" },
+      { id: "modes", title: "PACx Direct & Teams",          desc: "Single + Multiplayer",                         url: "" },
+      { id: "rel",   title: "Relational Currency WOW!",     desc: "Deposits by client type",                      url: "" },
+      { id: "free",  title: "Free Resources",               desc: "Self 360 · MindScan · Questionnaire",          url: "" },
+      { id: "game",  title: "Gamification",                 desc: "Coins · Streaks · Badges",                     url: "" },
+      { id: "lib",   title: "Resource Library",             desc: "Docs · Playbooks · Videos",                    url: "" },
+      { id: "vmap",  title: "V-MAP",                        desc: "Living one-page business plan",                url: "" }
     ];
 
-    /********************
-     * PACx MVP data (seed)
-     ********************/
-    const DEFAULT_TEAMS = ["Development","Marketing","Operations","Financial"];
+    const STORAGE_KEY = "pacx_demo_urls_v1";
 
-    const DEFAULT_PLAYERS = [
-      { id:"p1", name:"Rich Campe",     team:"Operations",  avatar:"🧔",  lag:91, lead:93, lift:98, dials:3, notes:[] },
-      { id:"p2", name:"Alan Graham",    team:"Development", avatar:"🕺",  lag:88, lead:92, lift:96, dials:3, notes:[] },
-      { id:"p3", name:"Reggie Lawrence",team:"Marketing",   avatar:"🕺",  lag:90, lead:90, lift:95, dials:2, notes:[] },
-      { id:"p4", name:"Jon Zieve",      team:"Financial",   avatar:"🧔🏻", lag:85, lead:88, lift:92, dials:2, notes:[] },
-      { id:"p5", name:"Drake Lewis",    team:"Marketing",   avatar:"🧍",  lag:70, lead:74, lift:80, dials:4, notes:[] },
-      { id:"p6", name:"Dave Erland",    team:"Operations",  avatar:"🧑‍🦲",lag:56, lead:60, lift:52, dials:1, notes:[] },
-      { id:"p7", name:"Nick Davies",    team:"Development", avatar:"👨‍🦳",lag:49, lead:55, lift:45, dials:4, notes:[] },
-      { id:"p8", name:"Joshua Greco",   team:"Financial",   avatar:"🧔🏼", lag:18, lead:22, lift:20, dials:5, notes:[] },
-    ];
+    // Apply any saved URLs before the UI renders
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      window.DEMOS = window.DEMOS.map(d => ({ ...d, url: saved[d.id] ?? d.url }));
+    } catch (e) {
+      /* noop */
+    }
 
-    const STORAGE_KEY = "pacx_staging_hub_v2";
+    /***********************
+     * APP COMPONENTS      *
+     ***********************/
+    const { useState, useMemo, useEffect } = React;
 
-    const clampPct = (n)=>Math.max(0,Math.min(100,Math.round(n)));
-    const scoreFor = (p, metric) => {
-      if (metric==="Lag")  return p.lag;
-      if (metric==="Lead") return p.lead;
-      if (metric==="Lift") return p.lift;
-      return Math.round((p.lag + p.lead + p.lift)/3);
-    };
-
-    const Badge = ({children}) => (
-      <span className="inline-flex items-center rounded-full border border-white/20 px-2 py-1 text-xs font-medium">
-        {children}
-      </span>
-    );
-
-    const ProgressBar = ({value})=>{
-      const w = `${clampPct(value)}%`;
+    function Badge({ children }) {
       return (
-        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-          <div className="h-2 bg-white/80" style={{width:w}} />
-        </div>
+        <span className="inline-flex items-center rounded-full border border-stroke px-2 py-0.5 text-xs text-slate-300">
+          {children}
+        </span>
       );
-    };
+    }
 
-    /********************
-     * MVP Panel (built-in)
-     ********************/
-    function PacxMvpPanel() {
-      const [players, setPlayers] = useState(()=>{
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY))?.players ?? DEFAULT_PLAYERS; }
-        catch { return DEFAULT_PLAYERS; }
-      });
-      const [teams, setTeams] = useState(()=>{
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY))?.teams ?? DEFAULT_TEAMS; }
-        catch { return DEFAULT_TEAMS; }
-      });
-      const [metric, setMetric] = useState("All");
-      const [teamFilter, setTeamFilter] = useState("All");
-      const [saved, setSaved] = useState([]);
-      const [newViewName, setNewViewName] = useState("");
-      const [showPlayerId, setShowPlayerId] = useState(null);
-      const [huddleAgenda, setHuddleAgenda] = useState("");
-      const [vmap, setVmap] = useState({ vision:"", mission:"", values:"", lag:"", strategies:"", projects:"", leads:"" });
-
-      useEffect(()=>{
-        const payload = { players, teams, vmap };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      }, [players, teams, vmap]);
-
-      const filtered = useMemo(()=>{
-        return players
-          .filter(p => teamFilter==="All" ? true : p.team===teamFilter)
-          .sort((a,b)=> scoreFor(b,metric) - scoreFor(a,metric));
-      }, [players, teamFilter, metric]);
-
-      const totalDials = useMemo(()=> filtered.reduce((a,p)=>a+(p.dials||0),0), [filtered]);
-
-      const addPlayer = (name, team, avatar)=>{
-        if(!name||!team) return;
-        const id = "p"+(players.length+1);
-        setPlayers([...players, { id, name, team, avatar: avatar||"👤", lag:50, lead:50, lift:50, dials:0, notes:[] }]);
-      };
-      const addTeam = (t)=>{ if(t && !teams.includes(t)) setTeams([...teams, t]); };
-      const saveView = ()=>{
-        const id = "v"+Date.now();
-        const view = { id, name: newViewName||`${metric} · ${teamFilter}`, metric, teams: teamFilter };
-        setSaved([view, ...saved]); setNewViewName("");
-      };
-      const applyView = (v)=>{ setMetric(v.metric); setTeamFilter(v.teams||"All"); };
-      const get = (id)=> players.find(p=>p.id===id);
-
+    function Card({ title, desc, onOpen, onNewTab, disabled }) {
       return (
-        <div className="panel rounded-2xl p-5">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-xl font-semibold">PACx MVP · Live Game</h3>
-            <div className="flex gap-2 text-sm">
-              <Badge>Total Dials: {totalDials}</Badge>
-              <Badge>Metric: {metric}</Badge>
+        <div className="rounded-2xl border border-stroke bg-card p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-semibold">{title}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
             </div>
-          </div>
-
-          {/* Filters */}
-          <div className="mt-4 rounded-xl border border-white/10 p-3">
-            <div className="flex flex-wrap items-end gap-3">
-              <div>
-                <p className="text-xs text-white/60">Metric</p>
-                <select value={metric} onChange={e=>setMetric(e.target.value)} className="text-sm bg-transparent border border-white/20 rounded px-2 py-1">
-                  {["All","Lag","Lead","Lift"].map(m=> <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              <div>
-                <p className="text-xs text-white/60">Team</p>
-                <select value={teamFilter} onChange={e=>setTeamFilter(e.target.value)} className="text-sm bg-transparent border border-white/20 rounded px-2 py-1">
-                  <option>All</option>
-                  {teams.map(t=> <option key={t}>{t}</option>)}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input value={newViewName} onChange={e=>setNewViewName(e.target.value)} placeholder="Save view as…" className="text-sm bg-transparent border border-white/20 rounded px-2 py-1" />
-                <button onClick={saveView} className="text-sm border border-white/20 rounded px-3 py-1 hover:bg-white/10">Save View</button>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {saved.map(v=>
-                  <button key={v.id} onClick={()=>applyView(v)} className="text-sm border border-white/20 rounded px-3 py-1 hover:bg-white/10">
-                    {v.name}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Stack Rank */}
-          <div className="mt-6">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold">Avatar Health · Stack Rank</h4>
-              <Badge>{metric==="All" ? "Combined" : metric} · {teamFilter==="All" ? "All Teams" : teamFilter}</Badge>
-            </div>
-
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filtered.map((p,idx)=>{
-                const score = scoreFor(p,metric);
-                return (
-                  <button key={p.id} onClick={()=>setShowPlayerId(p.id)} className="pacx-card transition rounded-xl tile p-4 text-left">
-                    <div className="flex items-center gap-4">
-                      <div className="text-3xl">{p.avatar}</div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold">{idx+1}. {p.name}</p>
-                          <Badge>{p.dials||0} Dials</Badge>
-                        </div>
-                        <p className="text-xs text-white/70">{p.team}</p>
-                        <div className="mt-2 grid grid-cols-3 gap-3 text-sm">
-                          <div><div className="flex justify-between"><span>Lag</span><span>{p.lag}%</span></div><ProgressBar value={p.lag}/></div>
-                          <div><div className="flex justify-between"><span>Lead</span><span>{p.lead}%</span></div><ProgressBar value={p.lead}/></div>
-                          <div><div className="flex justify-between"><span>Lift</span><span>{p.lift}%</span></div><ProgressBar value={p.lift}/></div>
-                        </div>
-                        <div className="mt-2 text-xs">Overall: {score}%</div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Add Player / Team */}
-          <div className="mt-6 rounded-xl tile p-4">
-            <p className="font-semibold">Add Player / Special Team</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <input id="np-name" placeholder="Name" className="text-sm bg-transparent border border-white/20 rounded px-2 py-1" />
-              <select id="np-team" className="text-sm bg-transparent border border-white/20 rounded px-2 py-1">
-                <option value="">Team</option>
-                {teams.map(t=> <option key={t}>{t}</option>)}
-              </select>
-              <input id="np-avatar" placeholder="Avatar emoji" className="text-sm bg-transparent border border-white/20 rounded px-2 py-1 w-28" />
+            <div className="flex gap-2">
               <button
-                className="text-sm border border-white/20 rounded px-3 py-1 hover:bg-white/10"
-                onClick={()=>{
-                  const name = document.getElementById("np-name").value.trim();
-                  const team = document.getElementById("np-team").value.trim();
-                  const avatar = document.getElementById("np-avatar").value.trim() || "👤";
-                  addPlayer(name, team, avatar);
-                  document.getElementById("np-name").value = "";
-                  document.getElementById("np-team").value = "";
-                  document.getElementById("np-avatar").value = "";
-                }}
-              >Add Player</button>
-
-              <span className="mx-2 text-white/40">/</span>
-
-              <input id="new-team" placeholder="New team name" className="text-sm bg-transparent border border-white/20 rounded px-2 py-1" />
-              <button className="text-sm border border-white/20 rounded px-3 py-1 hover:bg-white/10"
-                onClick={()=>{
-                  const t = document.getElementById("new-team").value.trim();
-                  addTeam(t);
-                  document.getElementById("new-team").value = "";
-                }}
-              >Add Team</button>
+                onClick={onOpen}
+                disabled={disabled}
+                className={`px-3 py-1 rounded-full border text-sm ${
+                  disabled
+                    ? "opacity-50 cursor-not-allowed border-stroke"
+                    : "hover:bg-white/10 border-stroke"
+                }`}
+              >
+                Open
+              </button>
+              <button
+                onClick={onNewTab}
+                disabled={disabled}
+                className={`px-3 py-1 rounded-full border text-sm ${
+                  disabled
+                    ? "opacity-50 cursor-not-allowed border-stroke"
+                    : "hover:bg-white/10 border-stroke"
+                }`}
+              >
+                New Tab
+              </button>
             </div>
           </div>
-
-          {/* Coach Huddle */}
-          <div className="mt-6 rounded-xl tile p-4">
-            <p className="text-lg font-semibold">Coach Huddle Planner</p>
-            <p className="text-xs text-white/70">Set agenda in advance; paste Fathom link; attribute actions later in Player details.</p>
-            <textarea value={huddleAgenda} onChange={e=>setHuddleAgenda(e.target.value)} rows="4" placeholder="Agenda for next Huddle…"
-              className="mt-3 w-full text-sm bg-transparent border border-white/20 rounded p-2"></textarea>
-          </div>
-
-          {/* V-MAP */}
-          <div className="mt-6 rounded-xl tile p-4">
-            <p className="text-lg font-semibold">V-MAP · Virtual Momentum Action Plan</p>
-            <p className="text-xs text-white/70">Living, editable one-page plan tied to game metrics.</p>
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                ["Vision","vision"],
-                ["Mission","mission"],
-                ["Values","values"],
-                ["Lag KPIs","lag"],
-                ["Strategies","strategies"],
-                ["Projects","projects"],
-                ["Lead Indicators","leads"],
-              ].map(([label,key])=>(
-                <div key={key} className="rounded-xl border border-white/10 p-3">
-                  <p className="font-medium">{label}</p>
-                  <textarea
-                    value={vmap[key]||""}
-                    onChange={e=>setVmap({...vmap,[key]:e.target.value})}
-                    rows="4"
-                    placeholder={`${label}…`}
-                    className="mt-2 w-full text-sm bg-transparent border border-white/20 rounded p-2"
-                  ></textarea>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Player modal */}
-          {showPlayerId && (
-            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-              <div className="panel rounded-2xl w-full max-w-xl p-5">
-                {(()=>{
-                  const p = get(showPlayerId); if(!p) return null;
-                  const overall = scoreFor(p,"All");
-                  return (
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-3xl">{p.avatar}</div>
-                          <div>
-                            <p className="font-semibold">{p.name}</p>
-                            <p className="text-xs text-white/70">{p.team}</p>
-                          </div>
-                        </div>
-                        <button onClick={()=>setShowPlayerId(null)} className="text-sm border border-white/20 rounded px-3 py-1">Close</button>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                        <div><div className="flex justify-between"><span>Lag</span><span>{p.lag}%</span></div><ProgressBar value={p.lag}/></div>
-                        <div><div className="flex justify-between"><span>Lead</span><span>{p.lead}%</span></div><ProgressBar value={p.lead}/></div>
-                        <div><div className="flex justify-between"><span>Lift</span><span>{p.lift}%</span></div><ProgressBar value={p.lift}/></div>
-                      </div>
-                      <div className="mt-3 text-sm">Overall: <strong>{overall}%</strong> · Dials: <strong>{p.dials||0}</strong></div>
-
-                      <div className="mt-4">
-                        <p className="text-sm font-medium">Recent Actions</p>
-                        <ul className="list-disc pl-5 text-sm space-y-1">
-                          {(p.notes?.length ? p.notes : ["No actions yet."]).map((n,i)=> <li key={i}>{n}</li>)}
-                        </ul>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
+          {disabled && (
+            <p className="text-[11px] text-slate-500 mt-2">
+              (No link yet. Add it in <em>Edit Demo Links</em>.)
+            </p>
           )}
         </div>
       );
     }
 
-    /********************
-     * Generic Iframe panel
-     ********************/
-    function IframePanel({title, url}) {
-      return (
-        <div className="panel rounded-2xl p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold">{title}</h3>
-            <a className="text-sm underline text-white/80" href={url||"#"} target="_blank" rel="noreferrer">Open in new tab</a>
+    function IframeDemo({ url }) {
+      if (!url) {
+        return (
+          <div className="rounded-2xl border border-stroke bg-card p-6 text-sm text-slate-300">
+            Paste a link in <em>Edit Demo Links</em> (admin) to load here.
           </div>
-          {!url ? (
-            <div className="mt-4 p-4 rounded-xl border border-white/10 text-sm text-white/80">
-              Add your Canvas (or live) URL to this demo in the DEMOS array to load it here.
-            </div>
-          ) : (
-            <div className="mt-4 h-[72vh] rounded-xl overflow-hidden border border-white/10">
-              <iframe src={url} className="w-full h-full" style={{background:'#0d2147'}}></iframe>
-            </div>
-          )}
+        );
+      }
+      return (
+        <div className="rounded-2xl border border-stroke overflow-hidden">
+          <iframe
+            src={url}
+            title="Demo"
+            className="w-full h-[72vh] bg-black"
+            referrerPolicy="no-referrer"
+          />
         </div>
       );
     }
 
-    /********************
-     * Internal placeholder panel
-     ********************/
-    function InternalPanel({title, desc}) {
-      return (
-        <div className="panel rounded-2xl p-5">
-          <h3 className="text-xl font-semibold">{title}</h3>
-          <p className="text-white/80 mt-1">{desc}</p>
-          <p className="text-white/70 text-sm mt-4">Wire this panel to its real code or provide a Canvas URL and switch type to <code>iframe</code>.</p>
-        </div>
+    function Hub() {
+      const [activeId, setActiveId] = useState(window.DEMOS[0]?.id ?? "mvp");
+      const active = useMemo(
+        () => window.DEMOS.find(d => d.id === activeId),
+        [activeId]
       );
-    }
-
-    /********************
-     * Home launcher + router
-     ********************/
-    function App(){
-      const [active, setActive] = useState(null);
-
-      useEffect(()=>{
-        // Anchor routing support (#mvp, #wow, etc.)
-        const fromHash = location.hash.replace("#","");
-        if(fromHash){
-          const hit = DEMOS.find(d=> d.id===fromHash);
-          if(hit) setActive(hit);
-        }
-        const onHash = ()=> {
-          const h = location.hash.replace("#","");
-          const hit = DEMOS.find(d=> d.id===h);
-          setActive(hit||null);
-        };
-        window.addEventListener("hashchange", onHash);
-        return ()=> window.removeEventListener("hashchange", onHash);
-      }, []);
 
       return (
-        <div className="mx-auto max-w-6xl p-5">
+        <div className="mx-auto max-w-6xl p-5 md:p-8">
           {/* Header */}
           <header className="mb-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl border border-white/20 px-3 py-1 text-xs tracking-wide">PACx</div>
-                <h1 className="text-2xl font-bold">Staging Hub · Demo MVPs</h1>
+                <div className="rounded-2xl border border-stroke px-3 py-1 text-[11px] tracking-wide">
+                  PACx
+                </div>
+                <h1 className="text-xl md:text-2xl font-bold">
+                  Staging Hub · Demo MVPs
+                </h1>
               </div>
-              {active ? (
-                <button onClick={()=>{ setActive(null); history.replaceState({}, "", location.pathname); }}
-                  className="text-sm border border-white/20 rounded px-3 py-1 hover:bg-white/10">Back to All Demos</button>
-              ) : null}
+              <div className="flex items-center gap-2 text-sm">
+                <Badge>
+                  Demos: {window.DEMOS.length}
+                </Badge>
+              </div>
             </div>
           </header>
 
-          {/* Either show active demo, or the launcher grid */}
-          {active ? (
-            <>
-              {active.type==="mvp" && <PacxMvpPanel/>}
-              {active.type==="iframe" && <IframePanel title={active.title} url={active.url}/>}
-              {active.type==="internal" && <InternalPanel title={active.title} desc={active.desc}/>}
-            </>
-          ) : (
-            <>
-              <section className="panel rounded-2xl p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-semibold">Home · All Demo MVPs</h2>
-                    <p className="text-sm text-white/70 mt-1">Click any area to open the live demo. PACx MVP is the real game we’ll play together.</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-white/60">Metric: All</div>
-                    <div className="text-xs text-white/60">Total Dials: 24</div>
-                  </div>
-                </div>
+          {/* PACx MVP spotlight */}
+          <section className="mb-6">
+            <div className="rounded-2xl border border-stroke p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold">Prototype · Staging Hub · One link</p>
+                <p className="text-xs text-slate-400">
+                  Simple & motivating · All demos in one place
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveId("mvp")}
+                className="px-4 py-1.5 rounded-full border border-stroke hover:bg-white/10 text-sm"
+              >
+                Open PACx MVP
+              </button>
+            </div>
+          </section>
 
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {DEMOS.map(d=>(
-                    <a key={d.id} href={`#${d.id}`} onClick={()=>setActive(d)}
-                      className="pacx-card transition tile rounded-2xl p-4 block">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="font-semibold">{d.title}</p>
-                          <p className="text-xs text-white/70 mt-1">{d.desc}</p>
-                        </div>
-                        <span className="text-xl">→</span>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </section>
-            </>
-          )}
+          {/* Home tiles */}
+          <section className="mb-8">
+            <div className="rounded-2xl border border-stroke p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold">Home · All Demo MVPs</h2>
+                <Badge>Metric: All</Badge>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {window.DEMOS.map(d => (
+                  <Card
+                    key={d.id}
+                    title={d.title}
+                    desc={d.desc}
+                    onOpen={() => setActiveId(d.id)}
+                    onNewTab={() => d.url && window.open(d.url, "_blank")}
+                    disabled={!d.url}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Active demo */}
+          <section className="mb-14">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">
+                {active?.title ?? "Demo"} {active?.url ? "" : "· (no link yet)"}
+              </h3>
+              {active?.url && (
+                <a
+                  href={active.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1 rounded-full border border-stroke hover:bg-white/10 text-sm"
+                >
+                  Open in new tab
+                </a>
+              )}
+            </div>
+            <IframeDemo url={active?.url} />
+          </section>
 
           {/* Footer */}
-          <footer className="mt-8">
-            <div className="rounded-2xl tile p-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="text-sm text-white/70">Prototype · Staging Hub · All demos in one link · Simple & motivating</div>
+          <footer className="mb-10">
+            <div className="rounded-2xl border border-stroke p-4 flex items-center justify-between">
+              <div className="text-sm text-slate-300">
+                Prototype · Staging Hub · Simple & motivating
+              </div>
               <div className="flex items-center gap-2">
-                <a href="#mvp" className="px-3 py-1 rounded-full border border-white/20 text-sm hover:bg-white/10">Open PACx MVP</a>
+                <a href="#"
+                  onClick={(e)=>{e.preventDefault(); window.scrollTo({top:0, behavior:"smooth"});}}
+                  className="px-3 py-1 rounded-full border border-stroke hover:bg-white/10 text-sm">
+                  Back to top
+                </a>
               </div>
             </div>
           </footer>
@@ -466,7 +236,98 @@
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+    /***********************
+     * Mount App
+     ***********************/
+    ReactDOM.createRoot(document.getElementById("root")).render(<Hub />);
+
+    /*******************************************************
+     * ADMIN OVERLAY — Edit Demo Links (gated by ?admin=1)
+     *******************************************************/
+    (function AdminOverlay(){
+      const ADMIN_QUERY = new URLSearchParams(location.search).get("admin");
+      const ADMIN_MODE = ADMIN_QUERY === "1" || ADMIN_QUERY === "rich";
+      if (!ADMIN_MODE || !Array.isArray(window.DEMOS)) return;
+
+      function Panel(){
+        const initial = {};
+        window.DEMOS.forEach(d => initial[d.id] = d.url || "");
+        const [links, setLinks] = React.useState(initial);
+
+        function save(){
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(links));
+          alert("Saved demo links. Reloading to apply.");
+          location.reload();
+        }
+        function clearAll(){
+          localStorage.removeItem(STORAGE_KEY);
+          alert("Cleared saved links. Reloading.");
+          location.reload();
+        }
+
+        return (
+          <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-3">
+            <div className="w-[min(840px,95vw)] max-h-[85vh] overflow-auto rounded-2xl border border-stroke bg-ink p-4 md:p-5 shadow-2xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs border border-stroke rounded-full px-2 py-[2px]">ADMIN</span>
+                  <h3 className="text-lg font-semibold m-0">Edit Demo Links</h3>
+                </div>
+                <button onClick={()=>document.getElementById("pacx-admin-host").remove()}
+                  className="px-3 py-1 rounded-full border border-stroke hover:bg-white/10 text-sm">Close</button>
+              </div>
+              <p className="text-slate-400 text-sm mb-4">
+                Paste your **Canva share links** or live URLs. Saved to your browser (localStorage). Panel appears only with <code>?admin=1</code>.
+              </p>
+
+              <div className="grid gap-3">
+                {window.DEMOS.map(d => (
+                  <div key={d.id} className="rounded-xl border border-stroke p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-medium">{d.title}</div>
+                      <span className="text-[11px] border border-stroke rounded-full px-2 py-[1px]">{d.id}</span>
+                    </div>
+                    <input
+                      className="w-full rounded-lg border border-stroke bg-white/5 px-3 py-2 text-sm"
+                      placeholder="https://…"
+                      value={links[d.id] || ""}
+                      onChange={e => setLinks({...links, [d.id]: e.target.value})}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 mt-4">
+                <button onClick={clearAll}
+                  className="px-3 py-1 rounded-full border border-red-400/70 text-red-200 hover:bg-red-400/10 text-sm">Clear Saved Links</button>
+                <button onClick={save}
+                  className="px-3 py-1 rounded-full border border-stroke bg-slate-100 text-ink hover:bg-white text-sm font-semibold">Save Links</button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function Launcher(){
+        const [open, setOpen] = React.useState(false);
+        return (
+          <>
+            <button
+              onClick={()=>setOpen(true)}
+              title="Edit Demo Links (admin)"
+              className="fixed right-4 bottom-4 z-[9998] px-4 py-2 rounded-full border border-stroke bg-ink/80 hover:bg-ink text-slate-100 text-sm">
+              Edit Demo Links
+            </button>
+            {open && <Panel/>}
+          </>
+        );
+      }
+
+      const host = document.createElement("div");
+      host.id = "pacx-admin-host";
+      document.body.appendChild(host);
+      ReactDOM.createRoot(host).render(<Launcher />);
+    })();
   </script>
 </body>
 </html>
