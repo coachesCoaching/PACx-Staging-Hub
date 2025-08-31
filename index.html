@@ -4,63 +4,78 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PACx • Staging Hub</title>
-  <meta name="description" content="PACx staging hub: launch the PACx app or open the canvas demos." />
+  <meta name="description" content="PACx MVP launcher with quick access to demo views (Canvas/PDF mockups)." />
   <style>
     :root{
       --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
       --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --btnText:#02100a; --border:#2a2f4a;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
     .wrap{max-width:960px;margin:0 auto;padding:36px 20px 80px}
-    .bar{display:flex;align-items:center;gap:12px;margin-bottom:20px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+    .hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900}
     .badge{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--mint))}
     .h1{font-size:28px;color:var(--mint);margin:6px 0 4px;font-weight:900}
-    .subhead{color:var(--sub)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:16px}
-    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit}
-    .title{font-size:20px;font-weight:800}
+    .sub{color:var(--sub)}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:16px}
+    .cta{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .cta h2{margin:0;font-size:22px}
+    .btn{background:var(--btn);color:var(--btnText);border:none;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px}
+    .title{font-size:18px;font-weight:800}
     .desc{color:var(--sub)}
-    .btn{align-self:flex-start;background:var(--btn);color:var(--btnText);border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}
-    .note{margin-top:18px;color:var(--sub);font-size:13px}
-    a.card:hover{outline:2px solid var(--mint);outline-offset:2px}
-    .footer{margin-top:28px;color:var(--sub);font-size:12px}
+    .card:hover{outline:2px solid var(--mint);outline-offset:2px}
+    .foot{margin-top:22px;color:var(--sub);font-size:12px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <!-- Header -->
-    <div class="bar">
-      <div class="brand">
-        <span class="badge" aria-hidden="true"></span>
-        PACx • Staging Hub
+    <div class="hdr">
+      <div class="brand"><span class="badge" aria-hidden="true"></span>PACx • Staging Hub</div>
+      <div class="sub">KISS: Keep It Super Simple</div>
+    </div>
+
+    <!-- Primary: PACx MVP -->
+    <div class="panel cta">
+      <div>
+        <h2>PACx MVP — Let the Games Begin</h2>
+        <div class="sub">Play the game, test, give feedback, and roll out the overall PACx. (Awareness → Action Plan → Achievement)</div>
+      </div>
+      <a class="btn" href="./pacx.html">Open PACx MVP</a>
+    </div>
+
+    <!-- Secondary: Demo Views on the same page -->
+    <div class="panel">
+      <div class="h1">Demo Views</div>
+      <div class="sub">Quick access to your Canvas/PDF mockups used in reviews.</div>
+
+      <div class="grid">
+        <!-- Replace the hrefs below with your actual files in the repo -->
+        <a class="card" href="./PACX_Desktop_Walkthrough.pdf">
+          <div class="title">Desktop Walkthrough (PDF)</div>
+          <div class="desc">Single-screen desktop flow, one page per view.</div>
+        </a>
+
+        <a class="card" href="./PACX_Desktop_Walkthrough_v15.pdf">
+          <div class="title">Desktop Walkthrough v15 (PDF)</div>
+          <div class="desc">Latest iteration with Level/Industry/Lag/Leads updates.</div>
+        </a>
+
+        <!-- Fallback “Demo Hub” page that lists many links (optional but handy) -->
+        <a class="card" href="./canvas-demo.html">
+          <div class="title">Demo Hub</div>
+          <div class="desc">Index of all current demo assets & single-page mockups.</div>
+        </a>
       </div>
     </div>
 
-    <div class="h1">Let the Games Begin…</div>
-    <div class="subhead">Choose where you want to go.</div>
+    <!-- Admin is intentionally NOT linked here. Keep /admin.html private. -->
 
-    <!-- Tiles -->
-    <div class="grid">
-      <a class="card" href="./pacx.html">
-        <div class="title">PACx App</div>
-        <div class="desc">Launch the desktop flow (staging). Awareness → Action Plan → Achievement.</div>
-        <button class="btn" type="button">Open App</button>
-      </a>
-
-      <a class="card" href="./canvas-demo.html">
-        <div class="title">Canvas Demos</div>
-        <div class="desc">PDF walkthrough and single-page mockups used in reviews.</div>
-        <button class="btn" type="button">Open Demos</button>
-      </a>
-    </div>
-
-    <div class="note">KISS: Keep It Super Simple.</div>
-
-    <!-- No admin tile here by design. Keep admin at /admin.html and share privately. -->
-    <div class="footer">PAC Brand • Internal staging only</div>
+    <div class="foot">PAC Brand • Internal staging only</div>
   </div>
 </body>
 </html>
