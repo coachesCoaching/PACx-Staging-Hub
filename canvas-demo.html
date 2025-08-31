@@ -1,103 +1,64 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Canvas Demo Hub • PACx</title>
-  <meta name="description" content="Click any tile to open the shared Canvas demo (opens in a new tab)." />
-  <style>
-    :root{
-      --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
-      --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --border:#2a2f4a;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    .wrap{max-width:960px;margin:0 auto;padding:36px 20px 80px}
-    .hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:900}
-    .badge{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--mint))}
-    .h1{font-size:28px;color:var(--mint);margin:6px 0 4px;font-weight:900}
-    .sub{color:var(--sub)}
-    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:16px}
-    .cta{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-    .btn{background:var(--btn);color:#02100a;border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;text-decoration:none}
-    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
-    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px}
-    .title{font-size:18px;font-weight:800}
-    .desc{color:var(--sub)}
-    .foot{margin-top:22px;color:var(--sub);font-size:12px}
-    .card:hover{outline:2px solid var(--mint);outline-offset:2px}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Canvas Demo Hub</title>
+<style>
+:root{--bg:#0f1223;--panel:#161a2e;--text:#eaf0ff;--sub:#a8b1d1;--border:#2a2f4a;--mint:#56f3a6}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:980px;margin:0 auto;padding:34px 20px 60px}
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900}
+.dot{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#2fb8ff,#7cf8c8)}
+.btn{background:transparent;color:var(--text);border:1px solid var(--border);padding:10px 14px;border-radius:12px;text-decoration:none;font-weight:700}
+.btn:hover{outline:2px solid #2a365f}
+.h1{font-size:28px;color:var(--mint);margin:8px 0 4px;font-weight:900}
+.sub{color:var(--sub)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:18px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.title{font-size:18px;font-weight:800}
+.desc{color:var(--sub)}
+.open{color:#cef7ff;text-decoration:underline;align-self:flex-start}
+.topright{position:fixed;right:14px;top:14px}
+.topright a{background:#1f2642;border:1px solid var(--border);padding:8px 10px;border-radius:10px;font-weight:700;text-decoration:none;color:var(--text)}
+.topright a:hover{outline:2px solid #2a365f}
+</style>
+<script>
+function tiles(){try{return JSON.parse(localStorage.getItem('pacx_canvas_tiles')||'[]')}catch(e){return []}}
+</script>
 </head>
 <body>
+  <div class="topright"><a href="#" onclick="alert('Collaborate live with PACx.');return false;">Co-Create with PACx</a></div>
+
   <div class="wrap">
     <div class="hdr">
-      <div class="brand"><span class="badge"></span> Canvas Demo Hub</div>
-      <div class="cta">
-        <a class="btn ghost" href="./index.html">← Back to Hub</a>
-        <a class="btn" href="./admin.html">Admin</a>
+      <div class="brand"><span class="dot"></span> Canvas Demo Hub</div>
+      <div style="display:flex;gap:10px">
+        <a class="btn" href="index.html">← Back to Hub</a>
+        <a class="btn" href="admin.html">Admin</a>
       </div>
     </div>
 
     <div class="h1">Canvas Demos</div>
     <div class="sub">Click any tile to open the shared Canvas (opens in a new tab).</div>
 
-    <div class="panel">
-      <div id="tiles" class="grid"></div>
+    <div id="grid" class="grid"></div>
 
-      <div class="foot">
-        To add or rename tiles, open <strong>Admin</strong>, edit the list, and press <em>Save Tiles</em>.
-      </div>
-    </div>
+    <div class="sub" style="margin-top:18px">To add or rename tiles, open <strong>Admin</strong>, edit the list, and press <em>Save Tiles</em>.</div>
   </div>
 
-  <script>
-    // Default tiles (used if Admin hasn't saved any yet)
-    const DEFAULT_TILES = [
-      {
-        title: "Ideal Client WOW! Segmentation",
-        url: "https://chatgpt.com/canvas/shared/68b363ca0c108191b270f8ad2eafef0c",
-        desc: "Shared canvas link ending …ef0c."
-      },
-      {
-        title: "PACx Minimal Game Flow — MVP",
-        url: "https://chatgpt.com/canvas/shared/68b0ad2312888191adf8fbd08097610e",
-        desc: "Shared canvas link ending …610e."
-      },
-      {
-        title: "PACx Mobile — Tap To Run (v2)",
-        url: "https://chatgpt.com/canvas/shared/68b0a884b8fc81919f1ec53051d8846b",
-        desc: "Shared canvas link ending …846b."
-      },
-      {
-        title: "Frank & Drake — Flash Video + Deck",
-        url: "https://chatgpt.com/canvas/shared/68b4460de0408191a0869d3cd4a28241",
-        desc: "Shared canvas link ending …8241."
-      }
-    ];
-
-    function loadTiles() {
-      try {
-        const saved = localStorage.getItem('pacx_canvas_tiles');
-        return saved ? JSON.parse(saved) : DEFAULT_TILES;
-      } catch(e) {
-        return DEFAULT_TILES;
-      }
-    }
-
-    function render() {
-      const tiles = loadTiles();
-      const grid = document.getElementById('tiles');
-      grid.innerHTML = tiles.map(t => `
-        <a class="card" href="${t.url}" target="_blank" rel="noopener">
-          <div class="title">${t.title}</div>
-          <div class="desc">${t.desc || ""}</div>
-        </a>
-      `).join('');
-    }
-
-    render();
-  </script>
+<script>
+const g=document.getElementById('grid');
+for(const t of tiles()){
+  const a=document.createElement('a');
+  a.className='card'; a.href=t.u; a.target='_blank'; a.rel='noopener';
+  a.innerHTML=`<div class="title">${t.t||'Canvas'}</div>
+               <div class="desc">${t.d||''}</div>
+               <span class="open">Open</span>`;
+  g.appendChild(a);
+}
+</script>
 </body>
 </html>
