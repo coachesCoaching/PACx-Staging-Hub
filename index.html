@@ -1,225 +1,321 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PACx · Staging Hub · Demo MVPs</title>
-
-  <!-- Tailwind (CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            ink: "#0f172a",
-            card: "rgba(255,255,255,.06)",
-            stroke: "rgba(148,163,184,.25)",
-            btn: "#3b82f6"
-          },
-          boxShadow: {
-            soft: "0 8px 24px rgba(2,8,23,.24)"
-          }
-        }
-      }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PACx • Staging</title>
+  <meta name="description" content="PACx staging demo — desktop flow" />
+  <style>
+    :root{
+      --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
+      --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --btnText:#02100a; --field:#0f1223; --border:#2a2f4a;
     }
-  </script>
-
-  <!-- React + ReactDOM + Babel -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:920px;margin:0 auto;padding:32px 20px 80px}
+    .bar{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    .chip{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-weight:600}
+    .prog{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+    .p-outer{height:8px;background:#0b0e1b;border-radius:6px;width:100%}
+    .h1{font-size:28px;color:var(--mint);margin:12px 0 16px;font-weight:900}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:8px}
+    .title{font-size:22px;font-weight:800}
+    .sub{color:var(--sub)}
+    .lbl{display:block;color:var(--sub);margin:10px 0 8px;font-size:13px}
+    .select,.num{width:100%;background:var(--field);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;outline:none}
+    .row2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+    .btns{display:flex;gap:12px;margin-top:16px}
+    .btn{background:var(--btn);color:var(--btnText);font-weight:800;padding:12px 16px;border-radius:12px;border:none;cursor:pointer}
+    .ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .opt{padding:16px;text-align:left;font-weight:700;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer}
+    .opt.active{border:2px solid var(--mint)}
+    .lead-grid{display:grid;gap:10px;margin-top:12px}
+    .lead-row{display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr;gap:10px;align-items:center}
+    .thin{font-size:12px;color:var(--sub);margin-top:12px}
+    a{color:inherit}
+  </style>
+  <!-- React 18 via CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 </head>
+<body>
+<div id="root"></div>
 
-<body class="bg-[#0b1220] text-white">
-  <div id="root"></div>
+<script type="module">
+const { useState, useMemo } = React;
 
-  <!-- App Code -->
-  <script type="text/babel" data-presets="react,env">
-    const { useEffect, useMemo, useState } = React;
+// ---------- Data ----------
+const LEVEL_MULTIPLIER = { Beginner:1.0, Intermediate:1.3, Advanced:1.6 };
 
-    // ---- Demo registry ----
-    const DEMOS = [
-      { key: "mvp",        title: "PACx MVP Launch",            desc: "Play the ultimate PACx game" },
-      { key: "mobile",     title: "PACx Mobile — Tap To Run",   desc: "Mobile quick start" },
-      { key: "minimal",    title: "PACx Minimal Game Flow",     desc: "Simple + motivating" },
-      { key: "wow",        title: "Ideal Client WOW Segmentation", desc: "Segment + Playbook" },
-      { key: "sow",        title: "SOW Builder",                desc: "Build agreements faster" },
-      { key: "library",    title: "Resource Library",           desc: "Docs, Playbooks, Videos" },
-      { key: "internal",   title: "PACx Internal Game",         desc: "Our team’s LAG · LEAD · LIFT" },
-      { key: "onboarding", title: "PACx Onboarding",            desc: "ProAdvisorCoach onboarding" },
-    ];
+const LAG_BY_INDUSTRY = {
+  "Financial Services": [
+    { lag:"New AUM ($)", leads:[
+      {key:"Intro Meetings", label:"Intro Meetings", suggestedMinWeekly:3},
+      {key:"Discovery Calls", label:"Discovery Calls", suggestedMinWeekly:2},
+      {key:"Proposals Sent", label:"Proposals Sent", suggestedMinWeekly:1},
+      {key:"Follow-ups", label:"Follow-ups", suggestedMinWeekly:8},
+      {key:"Referrals Asked", label:"Referrals Asked", suggestedMinWeekly:3},
+    ]},
+    { lag:"New Clients (#)", leads:[
+      {key:"Intro Meetings", label:"Intro Meetings", suggestedMinWeekly:4},
+      {key:"Discovery Calls", label:"Discovery Calls", suggestedMinWeekly:3},
+      {key:"Proposals Sent", label:"Proposals Sent", suggestedMinWeekly:2},
+      {key:"Follow-ups", label:"Follow-ups", suggestedMinWeekly:10},
+      {key:"Referrals Asked", label:"Referrals Asked", suggestedMinWeekly:3},
+    ]},
+  ],
+  "Coaching / Consulting": [
+    { lag:"Projects Won (#)", leads:[
+      {key:"Discovery Calls", label:"Discovery Calls", suggestedMinWeekly:3},
+      {key:"Proposals Sent", label:"Proposals Sent", suggestedMinWeekly:2},
+      {key:"Follow-ups", label:"Follow-ups", suggestedMinWeekly:10},
+      {key:"Referrals Asked", label:"Referrals Asked", suggestedMinWeekly:2},
+      {key:"Demos Scheduled", label:"Demos Scheduled", suggestedMinWeekly:1},
+    ]},
+    { lag:"Revenue ($)", leads:[
+      {key:"Intro Meetings", label:"Intro Meetings", suggestedMinWeekly:4},
+      {key:"Discovery Calls", label:"Discovery Calls", suggestedMinWeekly:3},
+      {key:"Proposals Sent", label:"Proposals Sent", suggestedMinWeekly:2},
+      {key:"Follow-ups", label:"Follow-ups", suggestedMinWeekly:8},
+    ]},
+  ],
+  "Real Estate": [
+    { lag:"New Clients (#)", leads:[
+      {key:"Intro Meetings", label:"Intro Meetings", suggestedMinWeekly:5},
+      {key:"Discovery Calls", label:"Discovery Calls", suggestedMinWeekly:3},
+      {key:"Follow-ups", label:"Follow-ups", suggestedMinWeekly:12},
+      {key:"Referrals Asked", label:"Referrals Asked", suggestedMinWeekly:2},
+    ]},
+  ],
+  "Technology / Other": [
+    { lag:"Revenue ($)", leads:[
+      {key:"Intro Meetings", label:"Intro Meetings", suggestedMinWeekly:3},
+      {key:"Discovery Calls", label:"Discovery Calls", suggestedMinWeekly:2},
+      {key:"Demos Scheduled", label:"Demos Scheduled", suggestedMinWeekly:2},
+      {key:"Follow-ups", label:"Follow-ups", suggestedMinWeekly:8},
+    ]},
+  ],
+};
 
-    const LS_KEY = "pacx_demo_links_v2";
+const pct = n => Math.max(0, Math.min(100, Math.round(n)));
 
-    async function fetchJSON(path) {
-      try {
-        const res = await fetch(path, { cache: "no-store" });
-        if (!res.ok) throw new Error("not ok");
-        return await res.json();
-      } catch {
-        return null;
-      }
-    }
+// ---------- App ----------
+function App(){
+  const [step,setStep]=useState(1); // 1..6
+  const [coins,setCoins]=useState(240);
 
-    function loadLocal() {
-      try {
-        const raw = localStorage.getItem(LS_KEY);
-        return raw ? JSON.parse(raw) : {};
-      } catch {
-        return {};
-      }
-    }
+  const [level,setLevel]=useState("");                // Beginner | Intermediate | Advanced
+  const [industry,setIndustry]=useState("");          // one of keys in LAG_BY_INDUSTRY
+  const [lag,setLag]=useState("");                    // lag text
+  const [targetValue,setTargetValue]=useState("");
 
-    function saveLocal(obj) {
-      localStorage.setItem(LS_KEY, JSON.stringify(obj));
-    }
+  const [leads,setLeads]=useState({
+    "Intro Meetings":0,"Discovery Calls":0,"Proposals Sent":0,
+    "Follow-ups":0,"Referrals Asked":0,"Demos Scheduled":0
+  });
 
-    function downloadJSON(obj, filename = "demos.json") {
-      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
+  const progress = pct((step-1)*(100/6));
 
-    function Tile({ title, desc, link }) {
-      return (
-        <div className="rounded-2xl border border-stroke bg-card p-4 md:p-5 flex items-center justify-between">
-          <div className="pr-4">
-            <p className="font-semibold text-lg">{title}</p>
-            <p className="text-sm text-slate-300 mt-0.5">{desc}</p>
-          </div>
-          {link
-            ? <a href={link} target="_blank" rel="noopener" className="px-3.5 py-1.5 rounded-lg bg-btn hover:brightness-110 transition text-sm font-medium">Open</a>
-            : <span className="text-xs text-slate-400">No link yet</span>
-          }
-        </div>
-      );
-    }
+  const lagOptions = useMemo(
+    () => industry ? LAG_BY_INDUSTRY[industry] : [],
+    [industry]
+  );
 
-    function AdminPanel({ links, setLinks, repoConfig, onDownload, onImport }) {
-      return (
-        <aside className="w-full lg:w-[420px] xl:w-[480px] shrink-0">
-          <div className="sticky top-6 rounded-2xl border border-stroke bg-card p-5 space-y-4">
-            <p className="font-semibold text-lg">Edit Demo Links</p>
-            {DEMOS.map(d => (
-              <div key={d.key} className="space-y-1">
-                <p className="text-xs text-slate-300">{d.title}</p>
-                <input
-                  className="w-full rounded-lg bg-transparent border border-stroke px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-btn"
-                  placeholder="Paste Canvas/live link..."
-                  value={links[d.key] || ""}
-                  onChange={e => setLinks({ ...links, [d.key]: e.target.value })}
-                />
-              </div>
-            ))}
+  const leadOptions = useMemo(()=>{
+    if(!industry || !lag) return [];
+    const cfg = LAG_BY_INDUSTRY[industry].find(c=>c.lag===lag);
+    if(!cfg) return [];
+    const mult = level ? LEVEL_MULTIPLIER[level] : 1;
+    return cfg.leads.map(l => ({...l, suggestedMinWeekly: Math.ceil(l.suggestedMinWeekly*mult)}));
+  },[industry,lag,level]);
 
-            <div className="pt-3 border-t border-stroke">
-              <p className="text-xs text-slate-400 mb-2">
-                Shared config (if present): <code className="text-slate-300">/demos.json</code> {repoConfig ? "✓ loaded" : "— not found"}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => onDownload(links)}
-                  className="px-3 py-1.5 rounded-lg border border-stroke hover:bg-white/5 text-sm"
-                >
-                  Download demos.json
-                </button>
-                <label className="px-3 py-1.5 rounded-lg border border-stroke hover:bg-white/5 text-sm cursor-pointer">
-                  Import JSON
-                  <input type="file" accept="application/json" className="hidden"
-                    onChange={onImport}/>
-                </label>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-2">
-                Upload the downloaded file to your repo root as <code>demos.json</code>
-                &nbsp;to make links universal for everyone.
-              </p>
-            </div>
-          </div>
-        </aside>
-      );
-    }
+  const leadsLocked = !industry || !lag || !level;
 
-    function App() {
-      const isAdmin = useMemo(() => {
-        const p = new URLSearchParams(window.location.search);
-        return p.get("admin") === "1";
-      }, []);
+  function updateLead(key,val){
+    setLeads(prev=>({...prev,[key]:Math.max(0, Number(val)||0)}));
+  }
+  function resetDownstream(from){
+    if(from==="industry"){ setLag(""); setTargetValue(""); setLeads({"Intro Meetings":0,"Discovery Calls":0,"Proposals Sent":0,"Follow-ups":0,"Referrals Asked":0,"Demos Scheduled":0}); }
+    if(from==="lag"){ setTargetValue(""); setLeads({"Intro Meetings":0,"Discovery Calls":0,"Proposals Sent":0,"Follow-ups":0,"Referrals Asked":0,"Demos Scheduled":0}); }
+  }
 
-      const [repoConfig, setRepoConfig] = useState(null);
-      const [links, setLinks] = useState(loadLocal());
+  return (
+    React.createElement(React.Fragment,null,
+      React.createElement("div",{className:"wrap"},
+        // Header
+        React.createElement("div",{className:"bar"},
+          React.createElement("div",{className:"chip"},
+            React.createElement("span",{style:{width:24,height:24,borderRadius:12,background:"var(--accent)",display:"inline-block"}}),
+            "Player"
+          ),
+          React.createElement("div",{className:"chip"},
+            React.createElement("span",{style:{width:10,height:18,background:"var(--mint)",display:"inline-block",borderRadius:2}}),
+            coins
+          ),
+          React.createElement("div",{className:"prog","aria-label":"Lag Progress"},
+            React.createElement("span",{style:{fontWeight:700,color:"var(--sub)",whiteSpace:"nowrap"}},"Lag Progress"),
+            React.createElement("div",{className:"p-outer"},
+              React.createElement("div",{style:{height:8,width:progress+"%",background:"var(--mint)",borderRadius:6,transition:"width 240ms ease"}})
+            ),
+            React.createElement("span",{style:{fontWeight:700,color:"var(--sub)"}},progress,"%")
+          )
+        ),
 
-      useEffect(() => {
-        (async () => {
-          const cfg = await fetchJSON("./demos.json");
-          if (cfg && typeof cfg === "object") {
-            setRepoConfig(cfg);
-            setLinks(prev => ({ ...cfg, ...prev }));
-          }
-        })();
-      }, []);
+        // Step title
+        React.createElement("div",{className:"h1"},
+          step===1?"01 Intro":
+          step===2?"02 Level":
+          step===3?"03 Industry":
+          step===4?"04 Lag Goal — SMART Lag":
+          step===5?"05 Weekly Leads":"06 Summary"
+        ),
 
-      useEffect(() => { saveLocal(links); }, [links]);
+        // Step 1: Intro
+        step===1 && React.createElement("section",{className:"card"},
+          React.createElement("div",{className:"title"},"What time is it?"),
+          React.createElement("div",{style:{fontSize:36,fontWeight:900,color:"var(--mint)",marginTop:8}},"GAME TIME!"),
+          React.createElement("p",{className:"sub",style:{marginTop:6,fontSize:16}},"Are you ready to play?"),
+          React.createElement("div",{className:"btns"},
+            React.createElement("button",{className:"btn",onClick:()=>setStep(2)},"Let’s Go")
+          ),
+          React.createElement("div",{className:"thin"},"KISS: Keep It Super Simple")
+        ),
 
-      return (
-        <div className="max-w-6xl mx-auto p-5 md:p-8">
-          <header className="mb-6 md:mb-8">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl md:text-3xl font-bold">PACx · Staging Hub · Demo MVPs</h1>
-              {isAdmin ? (
-                <span className="text-xs px-2 py-1 rounded border border-stroke bg-white/5">Admin</span>
-              ) : null}
-            </div>
-            <p className="text-slate-300 text-sm mt-2">
-              Click a demo to open · Append <code>?admin=1</code> to the URL to edit links
-            </p>
-          </header>
+        // Step 2: Level
+        step===2 && React.createElement("section",{className:"card"},
+          React.createElement("div",{className:"title"},"Choose your Level of Play"),
+          React.createElement("p",{className:"sub",style:{marginTop:4}},"Beginner — Simple start, fast momentum. Intermediate — Balanced challenge. Advanced — Go big."),
+          React.createElement("div",{className:"row2",style:{marginTop:12}},
+            ["Beginner","Intermediate","Advanced"].map(lvl =>
+              React.createElement("button",{
+                key:lvl,
+                className:["opt",level===lvl?"active":""].join(" "),
+                onClick:()=>{setLevel(lvl); setCoins(c=>c+10);}
+              }, lvl)
+            )
+          ),
+          React.createElement("div",{className:"btns"},
+            React.createElement("button",{className:"btn ghost",onClick:()=>setStep(1)},"Back"),
+            React.createElement("button",{className:"btn",onClick:()=>setStep(3), disabled:!level,"aria-disabled":!level},"Continue")
+          )
+        ),
 
-          <div className="flex flex-col lg:flex-row gap-6">
-            <main className="flex-1 space-y-4">
-              {DEMOS.map(d => (
-                <Tile
-                  key={d.key}
-                  title={d.title}
-                  desc={d.desc}
-                  link={links[d.key]}
-                />
-              ))}
-            </main>
+        // Step 3: Industry
+        step===3 && React.createElement("section",{className:"card"},
+          React.createElement("div",{className:"title"},"Select your Industry"),
+          React.createElement("div",{className:"sub",style:{marginTop:4}},"Awareness step — Lag comes next."),
+          React.createElement("label",{className:"lbl"},"Industry"),
+          React.createElement("select",{
+            className:"select",
+            value:industry,
+            onChange:e=>{setIndustry(e.target.value); resetDownstream("industry");}
+          },
+            React.createElement("option",{value:""},"Choose…"),
+            ["Financial Services","Coaching / Consulting","Real Estate","Technology / Other"].map(ind =>
+              React.createElement("option",{key:ind,value:ind},ind)
+            )
+          ),
+          React.createElement("div",{className:"btns"},
+            React.createElement("button",{className:"btn ghost",onClick:()=>setStep(2)},"Back"),
+            React.createElement("button",{className:"btn",onClick:()=>setStep(4), disabled:!industry,"aria-disabled":!industry},"Continue")
+          )
+        ),
 
-            {isAdmin &&
-              <AdminPanel
-                links={links}
-                setLinks={setLinks}
-                repoConfig={repoConfig}
-                onDownload={(obj)=>downloadJSON(obj)}
-                onImport={(e)=>{
-                  const f = e.target.files?.[0];
-                  if(!f) return;
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    try {
-                      const data = JSON.parse(reader.result);
-                      setLinks(prev => ({...prev, ...data}));
-                    } catch {}
-                  };
-                  reader.readAsText(f);
-                  e.target.value = "";
-                }}
-              />
-            }
-          </div>
-        </div>
-      );
-    }
+        // Step 4: Lag
+        step===4 && React.createElement("section",{className:"card"},
+          React.createElement("div",{className:"title"},"Set your Lag Goal — SMART Lag"),
+          React.createElement("p",{className:"sub",style:{marginTop:4}},"Suggested: 35% above your run rate (based on Advanced). Adjust with your coach."),
+          React.createElement("div",{style:{marginTop:12}},
+            React.createElement("label",{className:"lbl"},"Lag Goal Type (from ", industry || "…", ")"),
+            React.createElement("select",{
+              className:"select",
+              value:lag,
+              onChange:e=>{setLag(e.target.value); resetDownstream("lag");}
+            },
+              React.createElement("option",{value:""},"Choose Lag…"),
+              lagOptions.map(opt => React.createElement("option",{key:opt.lag,value:opt.lag},opt.lag))
+            )
+          ),
+          React.createElement("div",{style:{marginTop:12}},
+            React.createElement("label",{className:"lbl"},"Time Period"),
+            React.createElement("select",{className:"select", defaultValue:"12"},
+              React.createElement("option",{value:"3"},"3 Months"),
+              React.createElement("option",{value:"6"},"6 Months"),
+              React.createElement("option",{value:"12"},"12 Months")
+            )
+          ),
+          React.createElement("div",{style:{marginTop:12}},
+            React.createElement("label",{className:"lbl"},"Target Value"),
+            React.createElement("input",{
+              className:"num",
+              placeholder: lag.includes("$") ? "$1,000,000" : "e.g., 25",
+              value:targetValue,
+              onChange:e=>setTargetValue(e.target.value)
+            })
+          ),
+          React.createElement("div",{className:"btns"},
+            React.createElement("button",{className:"btn ghost",onClick:()=>setStep(3)},"Back"),
+            React.createElement("button",{className:"btn",onClick:()=>setStep(5), disabled:(!lag||!targetValue),"aria-disabled":(!lag||!targetValue)},"Continue")
+          )
+        ),
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-  </script>
+        // Step 5: Leads
+        step===5 && React.createElement("section",{className:"card"},
+          React.createElement("div",{className:"title"},"Set your Weekly Leads"),
+          React.createElement("p",{className:"sub",style:{marginTop:4}},"Lead indicators are unlocked from your Industry, Lag, and Level of Play."),
+          leadsLocked
+            ? React.createElement("div",{style:{marginTop:10,padding:12,borderRadius:12,border:"1px dashed var(--border)",color:"var(--sub)"}}, "Choose your Level, Industry, and Lag first to unlock leads.")
+            : React.createElement("div",{className:"lead-grid"},
+                leadOptions.map(opt =>
+                  React.createElement("div",{key:opt.key,className:"lead-row"},
+                    React.createElement("div",{style:{fontWeight:700}},opt.label),
+                    React.createElement("div",{className:"sub",style:{fontSize:13}},"Suggested: ",opt.suggestedMinWeekly,"/wk"),
+                    React.createElement("input",{type:"number",min:"0",className:"num",
+                      value:String(leads[opt.key]||0),
+                      onChange:e=>updateLead(opt.key, e.target.value)
+                    })
+                  )
+                )
+              ),
+          React.createElement("div",{className:"btns"},
+            React.createElement("button",{className:"btn ghost",onClick:()=>setStep(4)},"Back"),
+            React.createElement("button",{className:"btn",onClick:()=>{setCoins(c=>c+25); setStep(6);}, disabled:leadsLocked,"aria-disabled":leadsLocked},"Continue")
+          )
+        ),
+
+        // Step 6: Summary
+        step===6 && React.createElement("section",{className:"card"},
+          React.createElement("div",{className:"title"},"Summary — Let the Games Begin… Rock On! (PACx)"),
+          React.createElement("div",{style:{marginTop:12,display:"grid",gap:"12px"}},
+            React.createElement("div",null, React.createElement("div",{className:"lbl"},"Level of Play"), level ),
+            React.createElement("div",null, React.createElement("div",{className:"lbl"},"Industry"), industry ),
+            React.createElement("div",null, React.createElement("div",{className:"lbl"},"Lag Goal"), lag," — Target: ", React.createElement("strong",null, targetValue || "—")),
+            React.createElement("div",null,
+              React.createElement("div",{className:"lbl"},"Weekly Leads"),
+              React.createElement("div",{style:{display:"grid",gap:"6px"}},
+                leadOptions.map(opt =>
+                  React.createElement("div",{key:opt.key,style:{display:"flex",gap:"10px"}},
+                    React.createElement("div",{style:{width:"220px"}}, opt.label),
+                    React.createElement("div",{className:"sub"},"Suggested ",opt.suggestedMinWeekly,"/wk"),
+                    React.createElement("div",null, "→ You set: ", (leads[opt.key]||0), "/wk")
+                  )
+                )
+              )
+            )
+          ),
+          React.createElement("div",{className:"btns"},
+            React.createElement("button",{className:"btn ghost",onClick:()=>setStep(5)},"Back"),
+            React.createElement("button",{className:"btn",onClick:()=>alert("Saved. Playing the Game starts now — Achievement stage!")}, "Save & Play the Game")
+          )
+        )
+      )
+    )
+  );
+}
+
+// Mount
+const rootEl = document.getElementById("root");
+ReactDOM.createRoot(rootEl).render(React.createElement(App));
+</script>
 </body>
 </html>
