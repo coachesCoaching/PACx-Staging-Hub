@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PACx • Staging Hub</title>
+  <style>
+    :root{
+      --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
+      --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --btnText:#02100a; --border:#2a2f4a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:960px;margin:0 auto;padding:40px 20px 80px}
+    .hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .brand{font-weight:900;font-size:24px;color:var(--mint)}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+    .card{background:transparent;border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}
+    .card h3{margin:0;font-size:18px}
+    .sub{color:var(--sub);font-size:14px}
+    .btn{display:inline-block;background:var(--btn);color:var(--btnText);font-weight:800;padding:10px 14px;border-radius:12px;text-decoration:none;text-align:center}
+    .ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .footer{margin-top:28px;color:var(--sub);font-size:12px}
+    a{color:inherit}
+    .tag{display:inline-block;font-size:11px;color:var(--sub);border:1px solid var(--border);border-radius:999px;padding:4px 8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hdr">
+      <div class="brand">PACx • Staging Hub</div>
+      <div class="tag">Desktop-first • KISS</div>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin:0 0 8px 0;">Launchpads</h2>
+      <p class="sub" style="margin:0 0 16px 0;">Choose where you want to go. Admin is separate from app/demos.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>PACx App (Staging)</h3>
+          <p class="sub">New desktop flow we just built: Intro → Level → Industry → Lag → Leads → Summary.</p>
+          <a class="btn" href="./pacx.html">Open PACx App</a>
+        </div>
+
+        <div class="card">
+          <h3>Canvas Demos</h3>
+          <p class="sub">Static screenshots & walkthroughs for stakeholder review. (Safe to share.)</p>
+          <a class="btn ghost" href="./canvas-demo.html">Open Canvas Demos</a>
+        </div>
+
+        <div class="card">
+          <h3>Admin</h3>
+          <p class="sub">Internal admin links, not the same as the app. (Different permissions.)</p>
+          <a class="btn ghost" href="./admin.html">Open Admin</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      PAC brand • “Let the Games Begin… Let’s Go! Rock On! — Always here to coach you up.”
+    </div>
+  </div>
+</body>
+</html>
