@@ -5,29 +5,150 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin • PACx Hub</title>
   <style>
-    :root{--bg:#0f1223;--panel:#161a2e;--text:#eaf0ff;--sub:#a8b1d1;--border:#2a2f4a;--mint:#56f3a6}
+    :root{
+      --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
+      --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --border:#2a2f4a;
+    }
+    *{box-sizing:border-box}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    .wrap{max-width:760px;margin:0 auto;padding:40px 20px}
-    .h1{font-size:26px;color:var(--mint);font-weight:900;margin:0 0 14px 0}
-    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:12px}
-    .sub{color:var(--sub);font-size:14px}
-    a{color:inherit}
-    .back{position:fixed;top:14px;left:14px;color:var(--sub);font-size:13px}
-    .list li{margin:8px 0}
+    .wrap{max-width:960px;margin:0 auto;padding:36px 20px 80px}
+    .hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900}
+    .badge{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--mint))}
+    .h1{font-size:28px;color:var(--mint);margin:6px 0 4px;font-weight:900}
+    .sub{color:var(--sub)}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:16px}
+    .btn{background:var(--btn);color:#02100a;border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;text-decoration:none}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .full{grid-column:1 / -1}
+    input, textarea{width:100%;background:#0b0f1e;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px}
+    label{font-size:12px;color:var(--sub);display:block;margin:6px 0 4px}
+    .tile{border:1px dashed var(--border);padding:12px;border-radius:12px;margin:10px 0}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .note{color:var(--sub);font-size:12px;margin-top:12px}
   </style>
 </head>
 <body>
-<a class="back" href="./index.html">← Hub</a>
-<div class="wrap">
-  <div class="h1">Admin</div>
-  <div class="card">
-    <p class="sub">Place admin-only links here (separate from app). Example targets below — replace with real URLs.</p>
-    <ul class="list">
-      <li><a href="#" onclick="alert('Replace with PAC Dash admin URL')">PAC Dash (admin)</a></li>
-      <li><a href="#" onclick="alert('Replace with MindScan admin URL')">MindScan (admin)</a></li>
-      <li><a href="#" onclick="alert('Replace with Billing/Invoices URL')">Billing / Invoices</a></li>
-    </ul>
+  <div class="wrap">
+    <div class="hdr">
+      <div class="brand"><span class="badge"></span> Admin</div>
+      <div class="actions">
+        <a class="btn ghost" href="./index.html">← Back to Hub</a>
+        <a class="btn ghost" href="./canvas-demo.html">Open Canvas Hub</a>
+      </div>
+    </div>
+
+    <div class="h1">Canvas Tiles</div>
+    <div class="sub">Add, rename, and update links. Click <em>Save Tiles</em> and refresh the Canvas Hub.</div>
+
+    <div class="panel">
+      <div id="tiles"></div>
+
+      <div class="actions">
+        <button class="btn" id="add">+ Add Tile</button>
+        <button class="btn" id="save">Save Tiles</button>
+        <button class="btn ghost" id="reset">Reset to Defaults</button>
+      </div>
+
+      <div class="note">
+        Data is saved locally in your browser for quick iteration. To share with others, you can either
+        (a) repeat these edits on their machine, or (b) ask me to “bake in” these tiles as new defaults in the repo.
+      </div>
+    </div>
   </div>
-</div>
+
+  <script>
+    const DEFAULT_TILES = [
+      { title: "Ideal Client WOW! Segmentation",
+        url: "https://chatgpt.com/canvas/shared/68b363ca0c108191b270f8ad2eafef0c",
+        desc: "Shared canvas link ending …ef0c."
+      },
+      { title: "PACx Minimal Game Flow — MVP",
+        url: "https://chatgpt.com/canvas/shared/68b0ad2312888191adf8fbd08097610e",
+        desc: "Shared canvas link ending …610e."
+      },
+      { title: "PACx Mobile — Tap To Run (v2)",
+        url: "https://chatgpt.com/canvas/shared/68b0a884b8fc81919f1ec53051d8846b",
+        desc: "Shared canvas link ending …846b."
+      },
+      { title: "Frank & Drake — Flash Video + Deck",
+        url: "https://chatgpt.com/canvas/shared/68b4460de0408191a0869d3cd4a28241",
+        desc: "Shared canvas link ending …8241."
+      }
+    ];
+
+    function load() {
+      try {
+        const saved = localStorage.getItem('pacx_canvas_tiles');
+        return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_TILES));
+      } catch (e) { return JSON.parse(JSON.stringify(DEFAULT_TILES)); }
+    }
+
+    function save(list) {
+      localStorage.setItem('pacx_canvas_tiles', JSON.stringify(list));
+    }
+
+    function renderEditor() {
+      const list = load();
+      const host = document.getElementById('tiles');
+      host.innerHTML = '';
+      list.forEach((t, i) => {
+        const el = document.createElement('div');
+        el.className = 'tile';
+        el.innerHTML = `
+          <div class="row">
+            <div class="full">
+              <label>Title</label>
+              <input value="${t.title.replace(/"/g,'&quot;')}" data-k="title"/>
+            </div>
+            <div class="full">
+              <label>Canvas URL</label>
+              <input value="${t.url.replace(/"/g,'&quot;')}" data-k="url"/>
+            </div>
+            <div class="full">
+              <label>Description (optional)</label>
+              <input value="${(t.desc||'').replace(/"/g,'&quot;')}" data-k="desc"/>
+            </div>
+          </div>
+          <div class="actions" style="margin-top:8px">
+            <button class="btn ghost" data-del>Remove</button>
+          </div>
+        `;
+        el.querySelectorAll('input').forEach(inp=>{
+          inp.addEventListener('input', ()=>{
+            const key = inp.getAttribute('data-k');
+            list[i][key] = inp.value;
+          });
+        });
+        el.querySelector('[data-del]').addEventListener('click', ()=>{
+          list.splice(i,1);
+          save(list);
+          renderEditor();
+        });
+        host.appendChild(el);
+      });
+
+      document.getElementById('add').onclick = ()=>{
+        list.push({ title:"New Tile", url:"https://", desc:"" });
+        save(list);
+        renderEditor();
+      };
+
+      document.getElementById('save').onclick = ()=>{
+        save(list);
+        alert('Saved. Open/reload Canvas Hub to see updates.');
+      };
+
+      document.getElementById('reset').onclick = ()=>{
+        if(confirm('Reset tiles to default list?')) {
+          save(DEFAULT_TILES);
+          renderEditor();
+        }
+      };
+    }
+
+    renderEditor();
+  </script>
 </body>
 </html>
