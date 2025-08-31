@@ -1,139 +1,90 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>PACx Demo’s • Canvas Hub</title>
-  <meta name="description" content="Launcher for PACx demo canvases with quick links and admin tile manager." />
+  <meta name="description" content="Launcher for PACx demo canvases via tile grid. Edit tiles in Admin."/>
   <style>
     :root{
-      /* PACx brand palette (matches Landing / Hub) */
-      --bg:#0f1223;          /* page background */
-      --panel:#161a2e;       /* cards / panels */
-      --text:#eaf0ff;        /* primary text */
-      --sub:#a8b1d1;         /* secondary text */
-      --mint:#56f3a6;        /* accent mint */
-      --accent:#37b9f1;      /* secondary accent (cyan/blue) */
-      --btn:#3be281;         /* button bg */
-      --btnText:#02100a;     /* button text */
-      --border:#2a2f4a;      /* borders */
+      --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
+      --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --btnText:#02100a; --border:#2a2f4a;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-    .wrap{max-width:960px;margin:0 auto;padding:36px 20px 80px}
-    .hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:900}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .top{display:flex;gap:12px;justify-content:flex-end;align-items:center;padding:14px 18px}
+    .chip{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:700}
+    .cta{background:var(--btn);color:var(--btnText)}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 64px}
+    .hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
     .badge{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--mint))}
-    .h1{font-size:28px;color:var(--mint);margin:6px 0 4px;font-weight:900}
+    .titleXL{font-size:28px;color:var(--mint);font-weight:900}
     .sub{color:var(--sub)}
-    .cta{display:flex;gap:14px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
-    .btn{background:var(--btn);color:var(--btnText);border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;text-decoration:none}
-    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
-    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px}
-    .title{font-size:18px;font-weight:800}
-    .desc{color:var(--sub)}
-    .card:hover{outline:2px solid var(--mint);outline-offset:2px}
-    .foot{margin-top:22px;color:var(--sub);font-size:12px}
-    /* in-tile “Open” link */
-    .card .open{color:#cfe7ff;text-decoration:underline}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;color:inherit;text-decoration:none;display:flex;flex-direction:column;gap:8px}
+    .card h3{margin:0 0 2px 0}
+    .open{color:#cfe7ff;text-decoration:underline;font-size:14px}
   </style>
 </head>
 <body>
+  <div class="top">
+    <a class="chip" href="index.html">← Back to Hub</a>
+    <a class="chip" href="admin.html">Admin</a>
+    <a class="chip cta" href="https://chat.openai.com" target="_blank" rel="noopener">Co-Create with PACx</a>
+  </div>
+
   <div class="wrap">
-    <!-- Header -->
     <div class="hdr">
-      <div class="brand">
-        <span class="badge" aria-hidden="true"></span>
-        <div>
-          <div class="h1">PACx Demo’s</div>
-          <div class="sub">Click any tile to open the shared Canvas (opens in a new tab).</div>
-        </div>
-      </div>
-      <div class="cta">
-        <a class="btn ghost" href="./index.html">← Back to Hub</a>
-        <a class="btn ghost" href="./admin.html">Admin</a>
-        <a class="btn" target="_blank" rel="noopener" href="https://chatgpt.com/">Co-Create with PACx</a>
+      <div class="badge"></div>
+      <div>
+        <div class="titleXL">PACx Demo’s</div>
+        <div class="sub">Click any tile to open the shared Canvas (opens in a new tab).</div>
       </div>
     </div>
 
-    <!-- Tiles grid -->
-    <div id="grid" class="grid" role="list"></div>
-
-    <div class="foot">
-      To add or rename tiles, open <strong>Admin</strong>, edit the list, and press <em>Save Tiles</em>.
-    </div>
+    <div id="tiles" class="grid" aria-live="polite"></div>
   </div>
 
   <script>
-    // Read tiles saved by admin.html (same storage key)
-    const KEY = 'pacxCanvasTiles';
+    const KEY = 'pacx_canvas_tiles';
 
-    function readTiles(){
-      try{
+    function getTiles() {
+      try {
         const raw = localStorage.getItem(KEY);
-        const arr = raw ? JSON.parse(raw) : [];
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
         return Array.isArray(arr) ? arr : [];
-      }catch(e){
-        return [];
-      }
+      } catch(e){ return []; }
     }
 
-    function shortId(url){
-      try{
-        const u = new URL(url);
-        const parts = u.pathname.split('/');
-        const slug = parts.filter(Boolean).pop() || '';
-        return slug.slice(-4);
-      }catch(e){ return ''; }
+    function emptyState() {
+      return [
+        {title:'Ideal Client WOW! Segmentation', url:'#', desc:'Add your Canvas share link in Admin.'},
+        {title:'PACx Minimal Game Flow — MVP', url:'#', desc:'Add your Canvas share link in Admin.'},
+        {title:'PACx Mobile — Tap To Run (v2)', url:'#', desc:'Add your Canvas share link in Admin.'},
+        {title:'PACx Onboarding Blueprint v1.0', url:'#', desc:'Add your Canvas share link in Admin.'},
+      ];
     }
 
-    function render(){
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      const tiles = readTiles();
+    function render() {
+      const container = document.getElementById('tiles');
+      container.innerHTML = '';
 
-      if(!tiles.length){
-        // Helpful empty state (still branded)
-        const stub = [
-          {title:'Ideal Client WOW! Segmentation', url:'', desc:'Add your Canvas share link in Admin.'},
-          {title:'PACx Minimal Game Flow — MVP', url:'', desc:'Add your Canvas share link in Admin.'},
-          {title:'PACx Mobile — Tap To Run (v2)', url:'', desc:'Add your Canvas share link in Admin.'},
-          {title:'PACx Onboarding Blueprint v1.0', url:'', desc:'Add your Canvas share link in Admin.'}
-        ];
-        stub.forEach(t => tiles.push(t));
-      }
+      const data = getTiles();
+      const rows = (data.length ? data : emptyState());
 
-      tiles.forEach(({title,url,desc}, i)=>{
+      rows.forEach(t => {
         const a = document.createElement('a');
         a.className = 'card';
-        a.setAttribute('role','listitem');
-        a.href = url || '#';
-        a.target = url ? '_blank' : '_self';
-        a.rel = 'noopener';
-        if(!url) a.addEventListener('click', e => e.preventDefault());
+        a.href = t.url || '#';
+        if (t.url && t.url.startsWith('http')) { a.target = '_blank'; a.rel = 'noopener'; }
 
-        const h = document.createElement('div');
-        h.className = 'title';
-        h.textContent = title || 'Canvas';
-
-        const d = document.createElement('div');
-        d.className = 'desc';
-        d.textContent = desc || (url ? `Shared canvas link ending …${shortId(url)}.` : 'No link yet — add via Admin.');
-
-        const open = document.createElement('span');
-        open.className = 'open';
-        open.textContent = 'Open';
-
-        a.appendChild(h);
-        a.appendChild(d);
-        a.appendChild(open);
-        grid.appendChild(a);
+        a.innerHTML = `
+          <h3>${t.title || 'Canvas'}</h3>
+          <div class="sub">${t.desc || ''}</div>
+          <span class="open">Open</span>
+        `;
+        container.appendChild(a);
       });
     }
 
