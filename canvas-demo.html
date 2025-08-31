@@ -44,34 +44,60 @@
     <div class="sub">Click any tile to open the shared Canvas (opens in a new tab).</div>
 
     <div class="panel">
-      <div class="grid">
-        <!-- A -->
-        <a class="card" href="https://chatgpt.com/canvas/shared/68b363ca0c108191b270f8ad2eafef0c" target="_blank" rel="noopener">
-          <div class="title">Ideal Client WOW! Segmentation</div>
-          <div class="desc">Shared canvas link ending …ef0c.</div>
-        </a>
-        <!-- B -->
-        <a class="card" href="https://chatgpt.com/canvas/shared/68b0ad2312888191adf8fbd08097610e" target="_blank" rel="noopener">
-          <div class="title">PACx Minimal Game Flow — MVP</div>
-          <div class="desc">Shared canvas link ending …610e.</div>
-        </a>
-        <!-- C -->
-        <a class="card" href="https://chatgpt.com/canvas/shared/68b0a884b8fc81919f1ec53051d8846b" target="_blank" rel="noopener">
-          <div class="title">PACx Mobile — Tap To Run (v2)</div>
-          <div class="desc">Shared canvas link ending …846b.</div>
-        </a>
-        <!-- D -->
-        <a class="card" href="https://chatgpt.com/canvas/shared/68b4460de0408191a0869d3cd4a28241" target="_blank" rel="noopener">
-          <div class="title">Frank &amp; Drake — Flash Video + Deck</div>
-          <div class="desc">Shared canvas link ending …8241.</div>
-        </a>
-      </div>
+      <div id="tiles" class="grid"></div>
 
       <div class="foot">
-        To add more: duplicate a <code>&lt;a class="card"&gt;</code> block, change the title/description, and paste the new
-        <code>https://chatgpt.com/canvas/shared/…</code> URL.
+        To add or rename tiles, open <strong>Admin</strong>, edit the list, and press <em>Save Tiles</em>.
       </div>
     </div>
   </div>
+
+  <script>
+    // Default tiles (used if Admin hasn't saved any yet)
+    const DEFAULT_TILES = [
+      {
+        title: "Ideal Client WOW! Segmentation",
+        url: "https://chatgpt.com/canvas/shared/68b363ca0c108191b270f8ad2eafef0c",
+        desc: "Shared canvas link ending …ef0c."
+      },
+      {
+        title: "PACx Minimal Game Flow — MVP",
+        url: "https://chatgpt.com/canvas/shared/68b0ad2312888191adf8fbd08097610e",
+        desc: "Shared canvas link ending …610e."
+      },
+      {
+        title: "PACx Mobile — Tap To Run (v2)",
+        url: "https://chatgpt.com/canvas/shared/68b0a884b8fc81919f1ec53051d8846b",
+        desc: "Shared canvas link ending …846b."
+      },
+      {
+        title: "Frank & Drake — Flash Video + Deck",
+        url: "https://chatgpt.com/canvas/shared/68b4460de0408191a0869d3cd4a28241",
+        desc: "Shared canvas link ending …8241."
+      }
+    ];
+
+    function loadTiles() {
+      try {
+        const saved = localStorage.getItem('pacx_canvas_tiles');
+        return saved ? JSON.parse(saved) : DEFAULT_TILES;
+      } catch(e) {
+        return DEFAULT_TILES;
+      }
+    }
+
+    function render() {
+      const tiles = loadTiles();
+      const grid = document.getElementById('tiles');
+      grid.innerHTML = tiles.map(t => `
+        <a class="card" href="${t.url}" target="_blank" rel="noopener">
+          <div class="title">${t.title}</div>
+          <div class="desc">${t.desc || ""}</div>
+        </a>
+      `).join('');
+    }
+
+    render();
+  </script>
 </body>
 </html>
