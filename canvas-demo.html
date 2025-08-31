@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Canvas Demo Hub • PACx</title>
-  <meta name="description" content="Tile grid of PACx canvases and demo assets." />
+  <meta name="description" content="Click any tile to open the shared Canvas demo (opens in a new tab)." />
   <style>
     :root{
       --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
-      --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --btnText:#02100a; --border:#2a2f4a;
+      --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --border:#2a2f4a;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -19,69 +19,59 @@
     .h1{font-size:28px;color:var(--mint);margin:6px 0 4px;font-weight:900}
     .sub{color:var(--sub)}
     .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:16px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+    .cta{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .btn{background:var(--btn);color:#02100a;border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;text-decoration:none}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
     .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px}
     .title{font-size:18px;font-weight:800}
     .desc{color:var(--sub)}
+    .foot{margin-top:22px;color:var(--sub);font-size:12px}
     .card:hover{outline:2px solid var(--mint);outline-offset:2px}
-    .btn{background:var(--btn);color:var(--btnText);border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;text-decoration:none}
-    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header class="hdr">
-      <div class="brand">
-        <div class="badge"></div>
-        Canvas Demo Hub
-      </div>
-      <nav style="display:flex;gap:10px">
+    <div class="hdr">
+      <div class="brand"><span class="badge"></span> Canvas Demo Hub</div>
+      <div class="cta">
         <a class="btn ghost" href="./index.html">← Back to Hub</a>
-        <a class="btn ghost" href="./admin.html">Admin</a>
-      </nav>
-    </header>
+        <a class="btn" href="./admin.html">Admin</a>
+      </div>
+    </div>
 
-    <h1 class="h1">Canvas Demos</h1>
-    <p class="sub">Click any tile to open the shared Canvas (opens in a new tab).</p>
+    <div class="h1">Canvas Demos</div>
+    <div class="sub">Click any tile to open the shared Canvas (opens in a new tab).</div>
 
-    <section class="panel">
+    <div class="panel">
       <div class="grid">
-        <!-- Tile 1 -->
-        <a class="card" target="_blank" rel="noopener"
-           href="https://chatgpt.com/canvas/shared/68b363ca0c108191b270f8ad2eafef0c">
-          <div class="title">Canvas A</div>
+        <!-- A -->
+        <a class="card" href="https://chatgpt.com/canvas/shared/68b363ca0c108191b270f8ad2eafef0c" target="_blank" rel="noopener">
+          <div class="title">Ideal Client WOW! Segmentation</div>
           <div class="desc">Shared canvas link ending …ef0c.</div>
         </a>
-
-        <!-- Tile 2 -->
-        <a class="card" target="_blank" rel="noopener"
-           href="https://chatgpt.com/canvas/shared/68b0ad2312888191adf8fbd08097610e">
-          <div class="title">Canvas B</div>
-          <div class="desc">Shared canvas link ending …7610e.</div>
+        <!-- B -->
+        <a class="card" href="https://chatgpt.com/canvas/shared/68b0ad2312888191adf8fbd08097610e" target="_blank" rel="noopener">
+          <div class="title">PACx Minimal Game Flow — MVP</div>
+          <div class="desc">Shared canvas link ending …610e.</div>
         </a>
-
-        <!-- Tile 3 -->
-        <a class="card" target="_blank" rel="noopener"
-           href="https://chatgpt.com/canvas/shared/68b0a884b8fc81919f1ec53051d8846b">
-          <div class="title">Canvas C</div>
+        <!-- C -->
+        <a class="card" href="https://chatgpt.com/canvas/shared/68b0a884b8fc81919f1ec53051d8846b" target="_blank" rel="noopener">
+          <div class="title">PACx Mobile — Tap To Run (v2)</div>
           <div class="desc">Shared canvas link ending …846b.</div>
         </a>
-
-        <!-- Tile 4 -->
-        <a class="card" target="_blank" rel="noopener"
-           href="https://chatgpt.com/canvas/shared/68b4460de0408191a0869d3cd4a28241">
-          <div class="title">Canvas D</div>
+        <!-- D -->
+        <a class="card" href="https://chatgpt.com/canvas/shared/68b4460de0408191a0869d3cd4a28241" target="_blank" rel="noopener">
+          <div class="title">Frank &amp; Drake — Flash Video + Deck</div>
           <div class="desc">Shared canvas link ending …8241.</div>
         </a>
       </div>
-    </section>
 
-    <section class="panel" style="margin-top:16px">
-      <div class="desc">
-        To add more: duplicate a <code>&lt;a class="card"&gt;</code> block, change the
-        title/description, and paste the new <code>https://chatgpt.com/canvas/shared/…</code> URL.
+      <div class="foot">
+        To add more: duplicate a <code>&lt;a class="card"&gt;</code> block, change the title/description, and paste the new
+        <code>https://chatgpt.com/canvas/shared/…</code> URL.
       </div>
-    </section>
+    </div>
   </div>
 </body>
 </html>
