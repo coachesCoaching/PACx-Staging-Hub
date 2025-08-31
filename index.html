@@ -1,97 +1,96 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>PACx • Staging Hub</title>
-<meta name="description" content="PACx MVP launcher with quick access to demo views (Canvas/PDF mockups)."/>
-<style>
-:root{
-  --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
-  --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --btnText:#02100a; --border:#2a2f4a;
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
-.wrap{max-width:960px;margin:0 auto;padding:36px 20px 80px}
-.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900}
-.badge{width:26px;height:26px;border-radius:50%;
-  background:linear-gradient(135deg,var(--accent),var(--mint))}
-.h1{font-size:28px;color:var(--mint);margin:6px 0 4px;font-weight:900}
-.sub{color:var(--sub)}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:16px}
-.cta{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.cta h2{margin:0;font-size:22px}
-.btn{background:var(--btn);color:var(--btnText);border:none;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none}
-.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}
-.title{font-size:18px;font-weight:800}
-.desc{color:var(--sub)}
-.card .open{color:#cef7ff;text-decoration:underline;align-self:flex-start}
-.topright{position:fixed;right:14px;top:14px}
-.topright a{background:#1f2642;border:1px solid var(--border);padding:8px 10px;border-radius:10px;font-weight:700;text-decoration:none;color:var(--text)}
-.topright a:hover{outline:2px solid #2a365f}
-</style>
-<script>
-/* ensure tiles data key exists for hub/admin */
-(function ensureTiles(){
-  const k='pacx_canvas_tiles';
-  if(!localStorage.getItem(k)){
-    const seed=[
-      {t:"Ideal Client WOW! Segmentation",u:"https://chatgpt.com/canvas/shared/68b363ca0c108191b270f8ad2eafef0c",d:"Shared canvas link ending …ef0c."},
-      {t:"PACx Minimal Game Flow — MVP",u:"https://chatgpt.com/canvas/shared/68b0ad23128888191adf8fbd08097610e",d:"Shared canvas link ending …610e."},
-      {t:"PACx Mobile — Tap To Run (v2)",u:"https://chatgpt.com/canvas/shared/68b0a884b8fc81919f1ec53051d8846b",d:"Shared canvas link ending …846b."},
-      {t:"PACx Onboarding Blueprint v1.0",u:"https://chatgpt.com/canvas/shared/68b4460de0408191a0869d3cd4a28241",d:"The blue print of flow for PACx"}
-    ];
-    localStorage.setItem(k,JSON.stringify(seed));
-  }
-})();
-</script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PACx • Staging Hub</title>
+  <meta name="description" content="PACx MVP launcher with quick access to demo views (Canvas/PDF mockups)." />
+  <style>
+    :root{
+      --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
+      --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --btnText:#02100a; --border:#2a2f4a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .top{display:flex;gap:12px;justify-content:flex-end;align-items:center;padding:14px 18px}
+    .chip{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:700}
+    .cta{background:var(--btn);color:var(--btnText)}
+    .wrap{max-width:960px;margin:0 auto;padding:36px 20px 80px}
+    .hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .badge{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--mint))}
+    .h1{font-size:28px;color:var(--mint);margin:6px 0 4px;font-weight:900}
+    .sub{color:var(--sub)}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:16px}
+    .ctaRow{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .ctaRow h2{margin:0;font-size:22px}
+    .btn{background:var(--btn);color:var(--btnText);font-weight:800;padding:12px 16px;border-radius:12px;border:none;cursor:pointer;text-decoration:none}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px}
+    .title{font-size:18px;font-weight:800}
+    .desc{color:var(--sub)}
+    .card .open{color:#cfe7ff;text-decoration:underline;font-size:14px}
+    .foot{margin-top:22px;color:var(--sub);font-size:12px}
+  </style>
 </head>
 <body>
-  <div class="topright"><a href="#" onclick="alert('Collaborate live with PACx.');return false;">Co-Create with PACx</a></div>
+  <div class="top">
+    <a class="chip" href="admin.html">Admin</a>
+    <a class="chip" href="canvas-demo.html">Canvas Demo Hub</a>
+    <a class="chip cta" href="https://chat.openai.com" target="_blank" rel="noopener">Co-Create with PACx</a>
+  </div>
 
   <div class="wrap">
     <div class="hdr">
-      <div class="brand"><span class="badge"></span> PACx • Staging Hub</div>
-      <div style="display:flex;gap:10px">
-        <a class="btn ghost" href="admin.html">Admin</a>
-        <a class="btn ghost" href="canvas-demo.html">Canvas Demo Hub</a>
+      <div class="badge"></div>
+      <div>
+        <div class="h1">Welcome</div>
+        <div class="sub">Single place to launch the <strong>PACx MVP</strong> and open demos, canvases, and docs.</div>
       </div>
     </div>
 
+    <!-- MVP -->
     <div class="panel">
-      <div class="cta">
-        <div>
-          <h2 class="h1">PACx MVP (Play the Game)</h2>
-          <div class="sub">Opens the minimal game flow used for testing and feedback.</div>
-        </div>
+      <div class="ctaRow">
+        <h2>PACx MVP (Play the Game)</h2>
         <a class="btn" href="pacx.html">Open PACx MVP</a>
       </div>
+      <div class="sub" style="margin-top:6px">Opens the minimal game flow used for testing and feedback.</div>
     </div>
 
+    <!-- PACx Demos -->
     <div class="panel">
-      <div class="h1">PACx Demos</div>
-      <div class="sub">Add/replace links below with your latest demo assets. These can be PDFs, images, or standalone pages.</div>
-      <div class="grid" style="margin-top:12px">
-        <div class="card">
+      <div class="h1" style="margin-top:0">PACx Demos</div>
+      <div class="sub" style="margin:4px 0 12px">
+        Add/replace links below with your latest demo assets. These can be PDFs, images, or standalone pages.
+      </div>
+
+      <div class="grid">
+        <!-- PDF -->
+        <a class="card" href="PACx_Desktop_Walkthrough.pdf" target="_blank" rel="noopener">
           <div class="title">Desktop Walkthrough (PDF)</div>
           <div class="desc">The single-page-per-screen deck.</div>
-          <a class="open" href="PACx_Desktop_Walkthrough.pdf" target="_blank" rel="noopener">Open</a>
-        </div>
-        <div class="card">
-          <div class="title">Industry ➜ Lag ➜ Leads strip (image)</div>
+          <span class="open">Open</span>
+        </a>
+
+        <!-- Image (or any page) -->
+        <a class="card" href="industry-lag-leads.png" target="_blank" rel="noopener">
+          <div class="title">Industry ➜ Lag ➜ Leads (image)</div>
           <div class="desc">Marketing strip for landing.</div>
-          <a class="open" href="PACx_desktop_walkthrough_updated.png" target="_blank" rel="noopener">Open</a>
-        </div>
-        <div class="card">
+          <span class="open">Open</span>
+        </a>
+
+        <!-- Canvas Hub -->
+        <a class="card" href="canvas-demo.html">
           <div class="title">Canvas Demo Hub</div>
           <div class="desc">Opens the Canvas Demo Hub (tile grid).</div>
-          <a class="open" href="canvas-demo.html">Open</a>
-        </div>
+          <span class="open">Open</span>
+        </a>
       </div>
-      <div class="sub" style="margin-top:10px">Tip: To add new tiles later, duplicate one of the <code>&lt;a class="card"&gt;</code> blocks above and change the <code>href</code>, title, and description. Make sure the file you link to exists at the repo root or use a full <code>https://</code> URL.</div>
+
+      <div class="foot">
+        Tip: If you prefer external links, replace the <code>href</code> with full <code>https://</code> URLs.  
+        Make sure files exist in this repo (same directory as this page) to avoid 404s.
+      </div>
     </div>
   </div>
 </body>
