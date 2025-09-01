@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PACx Demo • Ideal Client WOW</title>
+
+  <!-- Brand styles from repo root -->
+  <link rel="stylesheet" href="../../../styles.css" />
+
+  <style>
+    /* Small demo-only polish (keeps your brand) */
+    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 80px}
+    .hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .badge{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--mint))}
+    .titleXL{font-size:28px;color:var(--mint);font-weight:900}
+    .sub{color:var(--sub)}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 14px;color:inherit;text-decoration:none}
+    a.open{color:#cfe7ff;text-decoration:underline;font-size:14px}
+    .back-link{position:fixed;top:14px;left:14px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:rgba(16,26,43,.9)}
+  </style>
+</head>
+<body>
+  <!-- Back to hub (repo root has hub.html) -->
+  <a class="back-link" href="../../../hub.html" aria-label="Back to Demo Hub">← Hub</a>
+
+  <div class="wrap">
+    <header class="hdr">
+      <span class="badge"></span>
+      <div>
+        <div class="titleXL">Ideal Client WOW — Demo</div>
+        <div class="sub">Public HTML demo rendered from Canvas content</div>
+      </div>
+    </header>
+
+    <!-- ====== DEMO CONTENT (paste your Canvas HTML *inside* this card) ====== -->
+    <div class="card" id="demo-root">
+      <!-- 👇 Paste ONLY the inner HTML from your Canvas export here.
+           If your export has a full <html>…</html> page, copy the
+           inner body markup instead of the outer tags. -->
+      <!-- PASTE HERE -->
+    </div>
+    <!-- ====== /DEMO CONTENT ====== -->
+
+    <div style="margin-top:12px">
+      <a class="open" href="../../../hub.html">Back to Hub</a>
+    </div>
+  </div>
+
+  <!-- PACx Feedback + Back (global defaults already set in pacx-feedback.js) -->
+  <script src="../../../pacx-feedback.js" defer></script>
+</body>
+</html>
