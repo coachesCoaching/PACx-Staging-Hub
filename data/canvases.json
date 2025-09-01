@@ -2,9 +2,11 @@
   "updatedAt": "2025-09-01T16:10:00Z",
   "tiles": [
     {
-      "title": "Ideal Client WOW! Segmentation",
-      "url": "./data/raw/ideal-client-wow.html",
-      "description": "Public demo from Canvas export"
+{
+  "title": "Ideal Client WOW! Segmentation",
+  "url": "./data/demos/viewer.html?src=../raw/ideal-client-wow.html&title=Ideal%20Client%20WOW",
+  "description": "Public demo from Canvas export"
+}
     },
     {
       "title": "PACx Minimal Game Flow — MVP",
