@@ -3,141 +3,93 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Canvas Admin</title>
+  <title>PACx Admin — Canvas Tiles</title>
   <style>
-    :root{ --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1; --mint:#56f3a6; --border:#2a2f4a; }
-    *{ box-sizing:border-box }
-    body{ margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
-    .wrap{ max-width:1080px; margin:0 auto; padding:28px 18px 120px; }
-    h1{ display:flex; align-items:center; gap:10px; font-size:28px; font-weight:900; color:var(--mint); margin:0 0 16px; }
-    .bar{ display:flex; gap:10px; align-items:center; margin:10px 0 18px; flex-wrap:wrap; }
-    .btn{ background:#0f1223; color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px 12px; text-decoration:none; cursor:pointer }
-    .list{ display:grid; gap:12px; }
-    .item{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px; }
-    .row{ display:grid; grid-template-columns:120px 1fr; gap:8px; margin:6px 0; align-items:center }
-    input[type="text"]{ width:100%; background:#0f1223; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
-    textarea{ width:100%; height:54px; background:#0f1223; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
-    .drag{ cursor:grab; color:var(--sub); user-select:none }
-    .ok{ color:#89ffa9; font-size:12px }
-    .warn{ color:#ffb37c; font-size:12px }
-    .foot{ margin-top:18px; color:var(--sub); font-size:12px }
+    :root{--bg:#0f1223;--panel:#161a2e;--text:#eaf0ff;--sub:#a8b1d1;--mint:#56f3a6;--border:#2a2f4a}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 100px}
+    .hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .chip{background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:12px;font-weight:700}
+    .btn{background:var(--mint);color:#02100a;font-weight:800;padding:10px 14px;border:none;border-radius:10px;cursor:pointer}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .list{display:grid;gap:12px}
+    .item{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
+    .row{display:flex;gap:10px;align-items:center;margin:6px 0}
+    .row label{width:120px;color:var(--sub)}
+    .row input,.row textarea{flex:1;background:#0d1427;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px}
+    .drag{cursor:grab;user-select:none;padding:4px 8px;border:1px dashed var(--border);border-radius:8px;color:var(--sub)}
+    .ok{color:#8af7c9;font-weight:700;margin-left:8px}
+    .bad{color:#ff8b8b;font-weight:700;margin-left:8px}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Canvas Tiles</h1>
-
-    <div class="bar">
-      <button class="btn" id="save">Save Tiles</button>
-      <button class="btn" id="add">Add Tile</button>
-      <button class="btn" id="export">Export JSON</button>
-      <label class="btn" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
-        Import JSON <input id="file" type="file" accept=".json" hidden/>
-      </label>
-      <a class="btn" href="hub.html">Back to Hub</a>
+    <div class="hdr">
+      <a href="hub.html" class="btn ghost">← Back to Hub</a>
+      <div class="chip">Canvas Tiles</div>
+      <button id="add" class="btn ghost">Add Tile</button>
+      <button id="save" class="btn">Export JSON</button>
+      <small class="chip" style="font-weight:600">Drag to reorder. Paste your ChatGPT canvas share URLs.</small>
     </div>
-
-    <div id="list" class="list" aria-live="polite"></div>
-
-    <div class="foot">Autosaves locally as you type • Export JSON to commit <code>/data/canvases.json</code></div>
+    <div id="list" class="list"></div>
   </div>
 
   <script>
-    // --- state
-    let data = { updatedAt: '', titles: [] };
-
-    // --- elements
-    const list = document.getElementById('list');
-
-    function validUrl(s){ try{ new URL(s); return true; }catch{ return false; } }
+    const list  = document.getElementById('list');
+    const add   = document.getElementById('add');
+    const save  = document.getElementById('save');
+    let tiles = JSON.parse(localStorage.getItem('pacx_tiles')||'[]');
+    const emptyTile = ()=>({title:'',url:'',description:''});
+    const persist = ()=>localStorage.setItem('pacx_tiles',JSON.stringify(tiles));
+    const validateUrl=s=>{ try{ const u=new URL(s); return u.protocol==='https:'; }catch{ return false; } };
 
     function render(){
-      list.innerHTML = '';
-      data.titles.forEach((t, idx)=>{
-        const item = document.createElement('div');
-        item.className = 'item';
-        item.draggable = true;
-        item.innerHTML = `
-          <div class="drag" title="Drag to reorder">↕ Drag</div>
-          <div class="row"><label>Title</label><input class="title" type="text" value="${t.title||''}"/></div>
-          <div class="row"><label>Canvas URL</label><input class="url" type="text" value="${t.url||''}"/></div>
-          <div class="row"><label>Description</label><textarea class="desc">${t.description||''}</textarea></div>
-          <div class="row"><span></span>
-            <div>
-              <span class="${validUrl(t.url)?'ok':'warn'}">${validUrl(t.url)?'✓ URL OK':'⚠ URL invalid'}</span>
-              <button class="btn remove" style="float:right">Remove</button>
-            </div>
+      list.innerHTML='';
+      tiles.forEach((t,i)=>{
+        const el=document.createElement('div'); el.className='item'; el.draggable=true;
+        el.innerHTML=`
+          <div class="row"><span class="drag">↕ Drag</span>
+            <button data-action="remove" class="btn ghost" style="margin-left:8px">Remove</button></div>
+          <div class="row"><label>Title</label><input data-k="title" value="${t.title||''}" placeholder="Tile title"></div>
+          <div class="row"><label>Canvas URL</label>
+            <input data-k="url" value="${t.url||''}" placeholder="https://chatgpt.com/canvas/shared/...">
+            <span class="${validateUrl(t.url)?'ok':'bad'}">${validateUrl(t.url)?'URL OK':'Fix URL'}</span>
           </div>
+          <div class="row"><label>Description</label><textarea data-k="description" rows="2" placeholder="Optional…">${t.description||''}</textarea></div>
         `;
-        // handlers
-        item.querySelector('.title').addEventListener('input', e=>{ t.title = e.target.value; autosave(); });
-        item.querySelector('.url').addEventListener('input', e=>{ t.url = e.target.value; autosave(); render(); });
-        item.querySelector('.desc').addEventListener('input', e=>{ t.description = e.target.value; autosave(); });
-        item.querySelector('.remove').addEventListener('click', ()=>{ data.titles.splice(idx,1); autosave(); render(); });
-
-        // drag
-        item.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', idx.toString()); });
-        item.addEventListener('dragover', e=>e.preventDefault());
-        item.addEventListener('drop', e=>{
-          e.preventDefault();
-          const from = +e.dataTransfer.getData('text/plain');
-          const to   = idx;
-          if (from===to) return;
-          const [moved] = data.titles.splice(from,1);
-          data.titles.splice(to,0,moved);
-          autosave(); render();
+        // drag + drop
+        el.addEventListener('dragstart', e=>e.dataTransfer.setData('text/plain', i));
+        el.addEventListener('dragover', e=>{e.preventDefault(); el.style.outline='1px dashed #37b9f1';});
+        el.addEventListener('dragleave', ()=>el.style.outline='');
+        el.addEventListener('drop', e=>{
+          e.preventDefault(); el.style.outline='';
+          const from=+e.dataTransfer.getData('text/plain'); const to=i;
+          if(from===to) return; const item=tiles.splice(from,1)[0]; tiles.splice(to,0,item); persist(); render();
         });
-
-        list.appendChild(item);
+        // inputs
+        el.addEventListener('input', e=>{
+          const k=e.target.dataset.k; if(!k) return; tiles[i][k]=e.target.value; persist();
+          if(k==='url'){ const b=el.querySelector('span.ok,span.bad'); if(b){const ok=validateUrl(e.target.value); b.className=ok?'ok':'bad'; b.textContent=ok?'URL OK':'Fix URL';}}
+        });
+        el.querySelector('[data-action="remove"]').addEventListener('click',()=>{tiles.splice(i,1); persist(); render();});
+        list.appendChild(el);
       });
     }
 
-    function autosave(){
-      localStorage.setItem('pacx-tiles', JSON.stringify(data));
-    }
-    function loadInitial(){
-      const cached = localStorage.getItem('pacx-tiles');
-      if (cached){ data = JSON.parse(cached); render(); return; }
-      fetch('./data/canvases.json').then(r=>r.json()).then(json=>{ data=json; render(); })
-      .catch(()=>{ data = {updatedAt:'', titles:[]}; render(); });
-    }
-
-    // buttons
-    document.getElementById('add').addEventListener('click', ()=>{
-      data.titles.push({ title:'Untitled', url:'', description:'' });
-      autosave(); render();
+    add.addEventListener('click',()=>{tiles.push(emptyTile()); persist(); render();});
+    save.addEventListener('click',()=>{
+      const payload={updatedAt:new Date().toISOString(), tiles};
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='canvases.json'; a.click(); URL.revokeObjectURL(a.href);
     });
 
-    document.getElementById('export').addEventListener('click', ()=>{
-      const payload = {...data, updatedAt:new Date().toISOString()};
-      const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'canvases.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-
-    document.getElementById('file').addEventListener('change', (e)=>{
-      const file = e.target.files[0]; if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => { try{ data = JSON.parse(reader.result); }catch{ alert('Invalid JSON'); return; } autosave(); render(); }
-      reader.readAsText(file);
-    });
-
-    document.getElementById('save').addEventListener('click', ()=>{
-      const payload = {...data, updatedAt:new Date().toISOString()};
-      localStorage.setItem('pacx-tiles', JSON.stringify(payload));
-      alert('Saved to your browser. Click “Export JSON” to download and commit /data/canvases.json.');
-    });
-
-    loadInitial();
+    render();
   </script>
 
-  <!-- PACx Feedback + Back -->
   <script>
-    window.PACX_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
-    window.PACX_BACK_HREF = 'hub.html';
+    window.PACX_FEEDBACK_URL='https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
+    window.PACX_BACK_HREF='hub.html';
   </script>
   <script src="./pacx-feedback.js" defer></script>
 </body>
