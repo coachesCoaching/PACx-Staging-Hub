@@ -1,1 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PACx Demo Viewer</title>
 
+  <!-- Your brand styles (already in repo root) -->
+  <link rel="stylesheet" href="../../styles.css" />
+
+  <style>
+    /* Minimal shell layout */
+    body{margin:0;background:var(--bg,#0f1223);color:var(--text,#eaf0ff);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px 18px 28px}
+    .top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .badge{background:linear-gradient(135deg,var(--accent,#37b9f1),var(--mint,#56f3a6));border-radius:10px;color:#04121c;font-weight:900;padding:6px 10px}
+    .title{font-size:20px;font-weight:900}
+    .back{position:fixed;top:14px;left:14px;padding:8px 12px;border-radius:10px;background:rgba(16,26,43,.9);border:1px solid rgba(255,255,255,.12);text-decoration:none;color:#e6f0ff}
+    .back:hover{background:rgba(16,26,43,1);border-color:rgba(255,255,255,.25)}
+    .frame-wrap{height:calc(100vh - 78px);border:1px solid var(--border,#2a2f4a);border-radius:14px;overflow:hidden;background:var(--panel,#161a2e)}
+    iframe{width:100%;height:100%;border:0;background:#fff}
+    .warn{margin:10px 0 0 0;color:#a8b1d1;font-size:13px}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <!-- Back to Hub (optional override via ?back=/custom.html) -->
+  <a id="backLink" class="back" href="../hub.html" aria-label="Back to Demo Hub">← Hub</a>
+
+  <div class="wrap">
+    <div class="top">
+      <span class="badge">PACx Demo</span>
+      <div id="demoTitle" class="title">Loading…</div>
+    </div>
+
+    <div id="oops" class="warn hidden">No <code>?src=</code> provided. Append
+      <code>?src=/data/demos/exports/your-file.html</code> to this page’s URL.</div>
+
+    <div class="frame-wrap">
+      <iframe id="demoFrame" title="PACx Demo"></iframe>
+    </div>
+  </div>
+
+  <!-- PACx Feedback + Back (auto-added; change once here for all demos) -->
+  <script>
+    // --- Configure feedback & global back here (one place) ---
+    // Replace REPLACE_ME with your Google Form ID when you’re ready:
+    window.PACX_FEEDBACK_URL =
+      'https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
+
+    // Default back target (can be overridden via ?back=)
+    window.PACX_BACK_HREF = '../hub.html';
+
+    // --- Query params: src=<path-to-export>, title=<nice title>, back=<override> ---
+    const params = new URLSearchParams(location.search);
+    const src = params.get('src');                      // REQUIRED
+    const niceTitle = params.get('title') || '';
+    const backOverride = params.get('back');
+
+    // Set title line
+    const titleEl = document.getElementById('demoTitle');
+    if (niceTitle) {
+      titleEl.textContent = niceTitle;
+      document.title = `PACx Demo — ${niceTitle}`;
+    } else {
+      titleEl.textContent = 'PACx Demo';
+    }
+
+    // Back link
+    const backEl = document.getElementById('backLink');
+    if (backOverride) window.PACX_BACK_HREF = backOverride;
+    backEl.href = window.PACX_BACK_HREF;
+
+    // Load the export into the iframe
+    const oops = document.getElementById('oops');
+    const frame = document.getElementById('demoFrame');
+    if (!src) {
+      oops.classList.remove('hidden');
+    } else {
+      // Same-origin path recommended, e.g. /data/demos/exports/ideal-client-wow.html
+      frame.src = src;
+    }
+  </script>
+
+  <!-- One shared include renders the floating feedback FAB & modal -->
+  <script src="../pacx-feedback.js" defer></script>
+</body>
+</html>
