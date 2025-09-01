@@ -4,85 +4,105 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PACx Demo Viewer</title>
-
-  <!-- Your brand styles (already in repo root) -->
   <link rel="stylesheet" href="../../styles.css" />
-
   <style>
-    /* Minimal shell layout */
-    body{margin:0;background:var(--bg,#0f1223);color:var(--text,#eaf0ff);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    body{margin:0;background:var(--bg,#0f1223);color:var(--text,#eaf0ff);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
     .wrap{max-width:1200px;margin:0 auto;padding:18px 18px 28px}
     .top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-    .badge{background:linear-gradient(135deg,var(--accent,#37b9f1),var(--mint,#56f3a6));border-radius:10px;color:#04121c;font-weight:900;padding:6px 10px}
-    .title{font-size:20px;font-weight:900}
+    .badge{background:linear-gradient(135deg,var(--accent,#37b9f1),var(--mint,#56f3a6));border-radius:10px;color:#04121c;font-weight:900;padding:6px 10px;text-transform:uppercase;font-size:12px}
+    .title{font-size:22px;font-weight:900}
     .back{position:fixed;top:14px;left:14px;padding:8px 12px;border-radius:10px;background:rgba(16,26,43,.9);border:1px solid rgba(255,255,255,.12);text-decoration:none;color:#e6f0ff}
-    .back:hover{background:rgba(16,26,43,1);border-color:rgba(255,255,255,.25)}
-    .frame-wrap{height:calc(100vh - 78px);border:1px solid var(--border,#2a2f4a);border-radius:14px;overflow:hidden;background:var(--panel,#161a2e)}
-    iframe{width:100%;height:100%;border:0;background:#fff}
-    .warn{margin:10px 0 0 0;color:#a8b1d1;font-size:13px}
+    .back:hover{background:rgba(16,26,43,.13)}
+    .frame{height:calc(100vh - 78px);border:0;border-radius:14px;overflow:hidden;background:var(--panel,#161a2e);width:100%}
+    .warn{margin:10px 0 0 0;color:#a8bd1d;font-size:13px}
     .hidden{display:none}
   </style>
 </head>
 <body>
-  <!-- Back to Hub (optional override via ?back=/custom.html) -->
-  <a id="backLink" class="back" href="../hub.html" aria-label="Back to Demo Hub">← Hub</a>
-
+  <a class="back" href="../../hub.html">← Hub</a>
   <div class="wrap">
     <div class="top">
       <span class="badge">PACx Demo</span>
-      <div id="demoTitle" class="title">Loading…</div>
+      <div class="title" id="ttl">PACx Demo</div>
     </div>
-
-    <div id="oops" class="warn hidden">No <code>?src=</code> provided. Append
-      <code>?src=/data/demos/exports/your-file.html</code> to this page’s URL.</div>
-
-    <div class="frame-wrap">
-      <iframe id="demoFrame" title="PACx Demo"></iframe>
-    </div>
+    <iframe id="frame" class="frame"></iframe>
+    <div id="msg" class="warn hidden"></div>
   </div>
 
-  <!-- PACx Feedback + Back (auto-added; change once here for all demos) -->
+<script>
+(function(){
+  const q = new URLSearchParams(location.search);
+  const src = q.get('src');                  // e.g. ../raw/ideal-client-wow.html
+  const title = q.get('title') || 'PACx Demo';
+  document.getElementById('ttl').textContent = title;
+
+  const msg = (t)=>{ const el = document.getElementById('msg'); el.textContent = t; el.classList.remove('hidden'); };
+
+  if(!src){ msg('Missing ?src=… in URL'); return; }
+
+  fetch(src, {cache:'no-store'})
+    .then(r => r.text())
+    .then(txt => {
+      const isFullHTML = /^\s*<!doctype html>|<html[\s>]/i.test(txt);
+      let html;
+
+      if (isFullHTML) {
+        // It’s already a full page: just use it.
+        html = txt;
+      } else {
+        // It’s raw source (likely from Canvas). Build a shell that loads React UMD and runs it.
+        // Transform common ESM imports to UMD:
+        let code = txt
+          .replace(/^\s*import\s+React(?:[^;]*);?/m, 'const React = window.React; const {useMemo,useRef,useState,useEffect,useCallback} = React;')
+          .replace(/^\s*import\s+ReactDOM(?:[^;]*);?/m, 'const ReactDOM = window.ReactDOM;')
+          .replace(/^\s*export\s+default\s+/m, 'window.__PACX_DEMO__ = ')
+          ;
+
+        // If no explicit export default, try to find a top-level component named App and expose it
+        if (!/__PACX_DEMO__/.test(code)) {
+          // naive fallback: if there’s function App(…){…}
+          if (/function\s+App\s*\(/.test(code) || /const\s+App\s*=/.test(code)) {
+            code += '\nwindow.__PACX_DEMO__ = typeof App!=="undefined" ? App : null;\n';
+          }
+        }
+
+        html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${title}</title>
+<link rel="stylesheet" href="../../../styles.css" />
+<style>
+  body{margin:0;background:#0f1223;color:#eaf0ff;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  .root{padding:18px}
+</style>
+<!-- React UMD -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+</head>
+<body>
+  <div id="root" class="root"></div>
   <script>
-    // --- Configure feedback & global back here (one place) ---
-    // Replace REPLACE_ME with your Google Form ID when you’re ready:
-    window.PACX_FEEDBACK_URL =
-      'https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
-
-    // Default back target (can be overridden via ?back=)
-    window.PACX_BACK_HREF = '../hub.html';
-
-    // --- Query params: src=<path-to-export>, title=<nice title>, back=<override> ---
-    const params = new URLSearchParams(location.search);
-    const src = params.get('src');                      // REQUIRED
-    const niceTitle = params.get('title') || '';
-    const backOverride = params.get('back');
-
-    // Set title line
-    const titleEl = document.getElementById('demoTitle');
-    if (niceTitle) {
-      titleEl.textContent = niceTitle;
-      document.title = `PACx Demo — ${niceTitle}`;
-    } else {
-      titleEl.textContent = 'PACx Demo';
-    }
-
-    // Back link
-    const backEl = document.getElementById('backLink');
-    if (backOverride) window.PACX_BACK_HREF = backOverride;
-    backEl.href = window.PACX_BACK_HREF;
-
-    // Load the export into the iframe
-    const oops = document.getElementById('oops');
-    const frame = document.getElementById('demoFrame');
-    if (!src) {
-      oops.classList.remove('hidden');
-    } else {
-      // Same-origin path recommended, e.g. /data/demos/exports/ideal-client-wow.html
-      frame.src = src;
-    }
+  try {
+    ${code}
+    const C = window.__PACX_DEMO__;
+    if (!C) throw new Error("No export default/Component found. Ensure your Canvas code exports a component.");
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(C));
+  } catch (e) {
+    document.body.innerHTML = '<pre style="white-space:pre-wrap;padding:16px;color:#ff6b6b;background:#1a1f3a;border-radius:12px;border:1px solid #39406a;">'+
+      (e && (e.stack||e.message) || e)+'</pre>';
+  }
   </script>
+</body>
+</html>`;
+      }
 
-  <!-- One shared include renders the floating feedback FAB & modal -->
-  <script src="../pacx-feedback.js" defer></script>
+      document.getElementById('frame').srcdoc = html;
+    })
+    .catch(e => msg('Failed to fetch src: ' + e));
+})();
+</script>
 </body>
 </html>
