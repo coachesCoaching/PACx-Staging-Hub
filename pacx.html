@@ -29,7 +29,13 @@
     .lead-row{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:10px;align-items:center}
   </style>
 </head>
-<body>
+<script>
+  // optional per-page overrides:
+  window.PACX_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
+  window.PACX_BACK_HREF = 'hub.html';
+</script>
+<script src="./pacx-feedback.js" defer></script>
+  <body>
   <!-- Back to Hub -->
   <a class="back-to-hub" href="hub.html" aria-label="Back to Demo Hub">← Hub</a>
 
