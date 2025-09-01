@@ -3,104 +3,53 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>PACx Demo’s • Canvas Hub</title>
-  <meta name="description" content="Launcher for PACx demo canvases via tile grid. Edit tiles in Admin."/>
+  <title>PACx — Demos</title>
   <style>
-    :root{
-      --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
-      --mint:#56f3a6; --accent:#37b9f1; --btn:#3be281; --btnText:#02100a; --border:#2a2f4a;
-    }
+    :root{--bg:#0f1223;--panel:#161a2e;--text:#eaf0ff;--sub:#a8b1d1;--mint:#56f3a6;--border:#2a2f4a}
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    .top{display:flex;gap:12px;justify-content:flex-end;align-items:center;padding:14px 18px}
-    .chip{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:700}
-    .cta{background:var(--btn);color:var(--btnText)}
-    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 64px}
-    .hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-    .badge{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--mint))}
-    .titleXL{font-size:28px;color:var(--mint);font-weight:900}
-    .sub{color:var(--sub)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px}
-    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;color:inherit;text-decoration:none;display:flex;flex-direction:column;gap:8px}
-    .card h3{margin:0 0 2px 0}
-    .open{color:#cfe7ff;text-decoration:underline;font-size:14px}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 100px}
+    .hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .chip{background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:12px;font-weight:700}
+    .cta{display:inline-block;margin-top:0;background:transparent;color:var(--text);border:1px solid var(--border);font-weight:800;padding:10px 14px;border-radius:10px;text-decoration:none}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:12px}
+    .card{display:block;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:inherit}
+    .open{color:#cfe7ff;text-decoration:underline}
   </style>
 </head>
-  <script>
-  // optional per-page overrides:
-  window.PACX_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
-  window.PACX_BACK_HREF = 'hub.html';
-</script>
-<script src="./pacx-feedback.js" defer></script>
 <body>
-  <div class="top">
-    <a class="chip" href="index.html">← Back to Hub</a>
-    <a class="chip" href="admin.html">Admin</a>
-    <a class="chip cta" href="https://chat.openai.com" target="_blank" rel="noopener">Co-Create with PACx</a>
-  </div>
-
   <div class="wrap">
     <div class="hdr">
-      <div class="badge"></div>
-      <div>
-        <div class="titleXL">PACx Demo’s</div>
-        <div class="sub">Click any tile to open the shared Canvas (opens in a new tab).</div>
-      </div>
+      <a href="hub.html" class="cta">← Back to Hub</a>
+      <div class="chip">PACx Demos</div>
+      <a href="admin.html" class="cta">Admin</a>
     </div>
-
-    <div id="tiles" class="grid" aria-live="polite"></div>
+    <div id="tiles" class="grid"></div>
   </div>
 
   <script>
-    const KEY = 'pacx_canvas_tiles';
-
-    function getTiles() {
-      try {
-        const raw = localStorage.getItem(KEY);
-        if (!raw) return [];
-        const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? arr : [];
-      } catch(e){ return []; }
+    async function load(){
+      const node=document.getElementById('tiles');
+      node.innerHTML='';
+      try{
+        const res=await fetch('data/canvases.json?__='+Date.now(),{cache:'no-store'});
+        const data=await res.json();
+        (data.tiles||[]).forEach(t=>{
+          const a=document.createElement('a'); a.className='card'; a.href=t.url||'#';
+          if(a.href.startsWith('http')){a.target='_blank';a.rel='noopener'}
+          a.innerHTML=`<h3 style="margin:0 0 6px">${t.title||'Untitled'}</h3>
+                       <div style="color:#a8b1d1">${t.description||''}</div>
+                       <span class="open">Open</span>`;
+          node.appendChild(a);
+        });
+      }catch(e){ node.textContent='Error loading canvases.'; }
     }
-
-    function emptyState() {
-      return [
-        {title:'Ideal Client WOW! Segmentation', url:'#', desc:'Add your Canvas share link in Admin.'},
-        {title:'PACx Minimal Game Flow — MVP', url:'#', desc:'Add your Canvas share link in Admin.'},
-        {title:'PACx Mobile — Tap To Run (v2)', url:'#', desc:'Add your Canvas share link in Admin.'},
-        {title:'PACx Onboarding Blueprint v1.0', url:'#', desc:'Add your Canvas share link in Admin.'},
-      ];
-    }
-
-    function render() {
-      const container = document.getElementById('tiles');
-      container.innerHTML = '';
-
-      const data = getTiles();
-      const rows = (data.length ? data : emptyState());
-
-      rows.forEach(t => {
-        const a = document.createElement('a');
-        a.className = 'card';
-        a.href = t.url || '#';
-        if (t.url && t.url.startsWith('http')) { a.target = '_blank'; a.rel = 'noopener'; }
-
-        a.innerHTML = `
-          <h3>${t.title || 'Canvas'}</h3>
-          <div class="sub">${t.desc || ''}</div>
-          <span class="open">Open</span>
-        `;
-        container.appendChild(a);
-      });
-    }
-    render();
+    load();
   </script>
-</body>
-</html>
-  <!-- PACx Feedback + Back -->
+
   <script>
-    window.PACX_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
-    window.PACX_BACK_HREF = 'hub.html';
+    window.PACX_FEEDBACK_URL='https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
+    window.PACX_BACK_HREF='hub.html';
   </script>
   <script src="./pacx-feedback.js" defer></script>
 </body>
