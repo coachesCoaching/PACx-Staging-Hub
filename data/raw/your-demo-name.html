@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PACx — Lead Game (MVP)</title>
+
+<!-- Tailwind (CDN) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: "#0f172a",
+          card: "rgba(255,255,255,.06)",
+          stroke: "rgba(148,163,184,.25)",
+          btn: "#3b82f6"
+        }
+      }
+    }
+  }
+</script>
+
+<!-- React + ReactDOM + Babel -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+  body { background:#0b1220; color:#fff; }
+  .tile { background: rgba(255,255,255,.06); border:1px solid rgba(148,163,184,.25); }
+  .avatar {
+    width:48px; height:48px; border-radius:9999px; object-fit:cover; background:#111827;
+    border:1px solid rgba(148,163,184,.35);
+  }
+  .healthbar { height: 8px; background: rgba(255,255,255,.18); border-radius: 9999px; overflow:hidden; }
+  .healthbar > div { height:100%; background:#22c55e; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react,env">
+const {useEffect, useMemo, useState} = React;
+
+/** -------------------------------------------------------
+ * Lead-Only Game (ties to big Lag “why”, but we log just LEADs)
+ * --------------------------------------------------------
+ * Storage shape (localStorage key = pacx_lead_game_v1):
+ * { players:[{id,name,team,photo,leadTarget,coins,streak,lastLogISO,leads:{'YYYY-MM-DD':count}}], teams:[...], lagBigGame:"" }
+ */
+
+const LS_KEY = "pacx_lead_game_v1";
+
+// Levels: open up with coins (you can tune these easily)
+const LEVELS = [
+  {name:"Rookie",   min:0},
+  {name:"Builder",  min:50},
+  {name:"Closer",   min:150},
+  {name:"Leader",   min:300},
+  {name:"Champion", min:600},
+];
+
+const BADGES = [
+  {key:"starter",  name:"Starter",         rule: (p)=> p.coins>=1},
+  {key:"streak3",  name:"3-Day Streak",    rule: (p)=> p.streak>=3},
+  {key:"streak7",  name:"7-Day Streak",    rule: (p)=> p.streak>=7},
+  {key:"hundred",  name:"100 Leads",       rule: (p)=> totalLeads(p)>=100},
+];
+
+function startState(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch{}
+  return {
+    lagBigGame: "Launch & adopt PACx (Lead-first) by <date>, measured by <metric>",
+    teams: ["Development","Marketing","Operations","Financial"],
+    players: [
+      seedPlayer("Rich Campe","Operations"),
+      seedPlayer("Alan Graham","Development"),
+      seedPlayer("Reggie Lawrence","Marketing"),
+      seedPlayer("Jon Zieve","Financial")
+    ]
+  };
+}
+
+function seedPlayer(name, team){
+  return {
+    id: (crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random())),
+    name, team,
+    photo: "",           // dataURL once uploaded
+    leadTarget: 3,       // per day
+    coins: 0,
+    streak: 0,
+    lastLogISO: null,
+    leads: {},           // keyed by day "YYYY-MM-DD"
+    badges: []
+  };
+}
+
+function save(state){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+function fmtDay(d=new Date()){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const dd=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+function daysBetween(aISO, bISO){
+  const a=new Date(aISO), b=new Date(bISO);
+  return Math.round((b-a)/(1000*60*60*24));
+}
+function totalLeads(p){
+  return Object.values(p.leads||{}).reduce((a,b)=>a+(b||0),0);
+}
+function levelForCoins(coins){
+  let current=LEVELS[0].name;
+  for(const L of LEVELS){ if(coins>=L.min) current=L.name; else break; }
+  return current;
+}
+function awardBadges(p){
+  const have=new Set(p.badges||[]);
+  for(const b of BADGES){
+    if(b.rule(p) && !have.has(b.key)) have.add(b.key);
+  }
+  return Array.from(have);
+}
+
+/** Health (0–100): today’s leads vs target, smoothed by last 3 days
+ *  Simple: health = average( last 3 days completion% ) * 100
+ */
+function healthPct(p){
+  const today=new Date();
+  let sum=0, n=0;
+  for(let i=0;i<3;i++){
+    const d=new Date(today); d.setDate(d.getDate()-i);
+    const key=fmtDay(d);
+    const done=(p.leads?.[key]||0);
+    const pct= p.leadTarget>0 ? clamp01(done/p.leadTarget) : 0;
+    sum+=pct; n++;
+  }
+  return Math.round((sum/n)*100);
+}
+
+function App(){
+  const [state,setState] = useState(startState);
+  const [name,setName]=useState("");
+  const [team,setTeam]=useState("");
+  const [leadTarget,setLeadTarget]=useState(3);
+  const [photoFile,setPhotoFile]=useState(null);
+  const [filterTeam,setFilterTeam]=useState("All");
+  const [focus,setFocus]=useState(null); // player_id to view detail (future)
+
+  useEffect(()=>{ save(state); }, [state]);
+
+  const teams = useMemo(()=>{
+    const t= new Set(state.teams);
+    state.players.forEach(p=>p.team && t.add(p.team));
+    return ["All", ...Array.from(t)];
+  }, [state]);
+
+  const playersRanked = useMemo(()=>{
+    const arr = state.players
+      .filter(p=> filterTeam==="All" ? true : p.team===filterTeam)
+      .map(p=>{
+        const h=healthPct(p);
+        const lvl=levelForCoins(p.coins);
+        return {...p, health:h, level:lvl};
+      })
+      .sort((a,b)=> b.health - a.health || b.coins - a.coins);
+    return arr;
+  }, [state, filterTeam]);
+
+  function addPlayer(){
+    if(!name.trim()) return;
+    const p=seedPlayer(name.trim(), team.trim()||"Unassigned");
+    p.leadTarget = Math.max(0, parseInt(leadTarget,10)||0);
+    if(photoFile){
+      const reader=new FileReader();
+      reader.onload = ()=>{
+        p.photo=reader.result;
+        setState(s=> ({...s, players:[...s.players, p]}));
+      };
+      reader.readAsDataURL(photoFile);
+    }else{
+      setState(s=> ({...s, players:[...s.players, p]}));
+    }
+    setName(""); setTeam(""); setPhotoFile(null);
+  }
+
+  function uploadFor(playerId, file){
+    const reader=new FileReader();
+    reader.onload = ()=>{
+      setState(s=> {
+        const players=s.players.map(p=> p.id===playerId ? {...p, photo: reader.result} : p);
+        return {...s, players};
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function logLead(playerId, n=1){
+    const day=fmtDay(new Date());
+    setState(s=>{
+      const players = s.players.map(p=>{
+        if(p.id!==playerId) return p;
+        const leads = {...(p.leads||{})};
+        leads[day]=(leads[day]||0)+n;
+        // streak logic
+        const todayISO = new Date().toISOString().slice(0,10);
+        let streak=p.streak||0;
+        if(!p.lastLogISO) streak=1;
+        else {
+          const diff=daysBetween(p.lastLogISO, todayISO);
+          if(diff===0) streak = p.streak; // already today
+          else if(diff===1) streak = p.streak+1;
+          else streak=1;
+        }
+        const coins = (p.coins||0) + n; // 1 coin per lead
+        let next = {...p, leads, coins, streak, lastLogISO: todayISO};
+        next.badges = awardBadges(next);
+        return next;
+      });
+      return {...s, players};
+    });
+  }
+
+  function setTarget(playerId, t){
+    setState(s=>{
+      const players = s.players.map(p=> p.id===playerId ? {...p, leadTarget: Math.max(0,parseInt(t,10)||0)} : p);
+      return {...s, players};
+    });
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto p-5 md:p-8">
+      <header className="mb-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold">PACx · Lead Game (MVP)</h1>
+          <a href="./" className="text-sm underline opacity-80 hover:opacity-100">← Back to Hub</a>
+        </div>
+        <p className="text-slate-300 text-sm mt-2">
+          Focus: do the few <strong>Lead</strong> actions that win the Big Lag Game. Slow is smooth. Smooth is fast.
+        </p>
+      </header>
+
+      {/* Big Lag Game statement */}
+      <section className="tile rounded-2xl p-4 mb-6">
+        <p className="text-sm text-slate-300">Big Lag Game</p>
+        <textarea
+          className="w-full mt-1 bg-transparent border border-stroke rounded p-3 text-sm"
+          rows="2"
+          value={state.lagBigGame}
+          onChange={e=> setState(s=> ({...s, lagBigGame:e.target.value}))}
+        />
+      </section>
+
+      {/* Add Player */}
+      <section className="tile rounded-2xl p-4 mb-6">
+        <p className="font-semibold mb-2">Add Player</p>
+        <div className="grid md:grid-cols-5 gap-3">
+          <input className="bg-transparent border border-stroke rounded px-3 py-2 text-sm md:col-span-2" placeholder="Name" value={name} onChange={e=>setName(e.target.value)} />
+          <input className="bg-transparent border border-stroke rounded px-3 py-2 text-sm" placeholder="Team" value={team} onChange={e=>setTeam(e.target.value)} />
+          <input className="bg-transparent border border-stroke rounded px-3 py-2 text-sm" placeholder="Lead target / day" value={leadTarget} onChange={e=>setLeadTarget(e.target.value)} />
+          <label className="text-sm flex items-center gap-2">
+            <span className="hidden md:inline">Avatar</span>
+            <input type="file" accept="image/*" onChange={e=> setPhotoFile(e.target.files?.[0]||null)} />
+          </label>
+        </div>
+        <div className="mt-3">
+          <button className="px-3 py-1.5 rounded-lg border border-stroke hover:bg-white/10 text-sm" onClick={addPlayer}>Add</button>
+        </div>
+      </section>
+
+      {/* Filters */}
+      <section className="mb-4 flex items-center gap-3">
+        <label className="text-sm text-slate-300">Team:</label>
+        <select className="bg-transparent border border-stroke rounded px-2 py-1 text-sm" value={filterTeam} onChange={e=>setFilterTeam(e.target.value)}>
+          {teams.map(t=> <option key={t}>{t}</option>)}
+        </select>
+      </section>
+
+      {/* Leaderboards */}
+      <section className="grid md:grid-cols-2 gap-4">
+        {playersRanked.map(p=>{
+          const health=healthPct(p);
+          const today=fmtDay(new Date());
+          const todayDone = p.leads?.[today]||0;
+          const pct = p.leadTarget>0 ? Math.min(100, Math.round((todayDone/p.leadTarget)*100)) : 0;
+
+          return (
+            <div key={p.id} className="tile rounded-2xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {p.photo
+                    ? <img src={p.photo} alt="" className="avatar" />
+                    : <div className="avatar flex items-center justify-center text-xs text-slate-400">No Img</div>
+                  }
+                  <div>
+                    <p className="font-semibold">{p.name}</p>
+                    <p className="text-xs text-slate-400">{p.team} · Level: {p.level}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm">Coins: <span className="font-semibold">{p.coins}</span></p>
+                  <p className="text-xs text-slate-400">Streak: {p.streak}d</p>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Avatar Health</span>
+                  <span>{health}%</span>
+                </div>
+                <div className="healthbar mt-1"><div style={{width:`${health}%`}}/></div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                <div className="tile rounded-lg p-3">
+                  <div className="text-xs text-slate-400">Today Leads</div>
+                  <div className="text-lg font-semibold">{todayDone}</div>
+                </div>
+                <div className="tile rounded-lg p-3">
+                  <div className="text-xs text-slate-400">Daily Target</div>
+                  <div className="text-lg font-semibold">{p.leadTarget}</div>
+                </div>
+                <div className="tile rounded-lg p-3">
+                  <div className="text-xs text-slate-400">Today Progress</div>
+                  <div className="text-lg font-semibold">{pct}%</div>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center gap-2">
+                <button className="px-3 py-1.5 rounded-lg border border-stroke hover:bg-white/10 text-sm" onClick={()=>logLead(p.id,1)}>+1 Lead</button>
+                <button className="px-3 py-1.5 rounded-lg border border-stroke hover:bg-white/10 text-sm" onClick={()=>logLead(p.id,3)}>+3 Leads</button>
+                <label className="ml-auto text-xs text-slate-300 flex items-center gap-2">
+                  Avatar:
+                  <input type="file" accept="image/*" onChange={e=> e.target.files?.[0] && uploadFor(p.id, e.target.files[0])} />
+                </label>
+              </div>
+
+              <div className="mt-3">
+                <label className="text-xs text-slate-300">Daily target</label>
+                <input
+                  className="ml-2 w-20 bg-transparent border border-stroke rounded px-2 py-1 text-sm"
+                  value={p.leadTarget}
+                  onChange={e=>setTarget(p.id, e.target.value)}
+                />
+              </div>
+
+              {p.badges?.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {p.badges.map(b => (
+                    <span key={b} className="text-[11px] px-2 py-0.5 rounded-full border border-stroke">{BADGES.find(x=>x.key===b)?.name||b}</span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </section>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
