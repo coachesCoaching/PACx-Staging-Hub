@@ -1,55 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PACx Demo’s</title>
-<link rel="stylesheet" href="./styles.css">
+  <meta charset="utf-8">
+  <title>Redirecting…</title>
+  <meta http-equiv="refresh" content="0; url=pacx.html">
+  <script>location.replace('pacx.html');</script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="header">
-      <div class="hdot"></div>
-      <h1>PACx Demo’s</h1>
-    </div>
-    <p>Click any tile to open the shared Canvas (opens in a new tab).</p>
-    <div class="toolbar">
-      <button class="btn" id="refresh">Refresh</button>
-      <a class="btn" href="./admin.html">Admin</a>
-      <small class="mono" id="last-updated"></small>
-    </div>
-    <div class="grid" id="grid"></div>
-    <footer>
-      <p class="note">Tiles are read from <code>/data/canvases.json</code>. If a tile shows “Fix URL”, the link is invalid—open Admin to update.</p>
-    </footer>
-  </div>
-<script>
-const grid = document.getElementById('grid');
-const last = document.getElementById('last-updated');
-function isValidUrl(s){ try{ new URL(s); return true; } catch { return false; } }
-function renderTile(t){
-  const a = document.createElement('a');
-  a.className = 'tile';
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  if(isValidUrl(t.url)){ a.href = t.url; a.setAttribute('aria-label', 'Open ' + t.title); }
-  else { a.href = '#'; a.addEventListener('click', e=>e.preventDefault()); a.classList.add('tile--disabled'); }
-  a.innerHTML = `
-    <div class="tile-body">
-      <h3>${t.title || 'Untitled'}</h3>
-      <p>${t.description ? t.description : ''}</p>
-      <span class="tile-link">${isValidUrl(t.url) ? 'Open' : 'Fix URL'}</span>
-    </div>`;
-  return a;
-}
-async function load(){
-  grid.innerHTML = '';
-  const res = await fetch('./data/canvases.json?ts=' + Date.now());
-  const data = await res.json();
-  last.textContent = 'Updated ' + (data.updatedAt || '');
-  (data.tiles || []).forEach(t => grid.appendChild(renderTile(t)));
-}
-document.getElementById('refresh').addEventListener('click', load);
-load();
-</script>
-</body></html>
+  <p>If you are not redirected, <a href="pacx.html">click here</a>.</p>
+</body>
+</html>
