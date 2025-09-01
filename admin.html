@@ -1,106 +1,137 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Canvas Tiles — Admin</title>
-<link rel="stylesheet" href="./styles.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Canvas Admin</title>
+  <style>
+    :root{ --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1; --mint:#56f3a6; --border:#2a2f4a; }
+    *{ box-sizing:border-box }
+    body{ margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
+    .wrap{ max-width:1080px; margin:0 auto; padding:28px 18px 120px; }
+    h1{ display:flex; align-items:center; gap:10px; font-size:28px; font-weight:900; color:var(--mint); margin:0 0 16px; }
+    .bar{ display:flex; gap:10px; align-items:center; margin:10px 0 18px; flex-wrap:wrap; }
+    .btn{ background:#0f1223; color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px 12px; text-decoration:none; cursor:pointer }
+    .list{ display:grid; gap:12px; }
+    .item{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px; }
+    .row{ display:grid; grid-template-columns:120px 1fr; gap:8px; margin:6px 0; align-items:center }
+    input[type="text"]{ width:100%; background:#0f1223; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+    textarea{ width:100%; height:54px; background:#0f1223; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+    .drag{ cursor:grab; color:var(--sub); user-select:none }
+    .ok{ color:#89ffa9; font-size:12px }
+    .warn{ color:#ffb37c; font-size:12px }
+    .foot{ margin-top:18px; color:var(--sub); font-size:12px }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="header">
-    <div class="hdot"></div>
+  <div class="wrap">
     <h1>Canvas Tiles</h1>
-  </div>
-  <p>Add, rename, update links, and <strong>drag to reorder</strong>. Click <em>Save Tiles</em> then refresh the Canvas Hub.</p>
-  <div class="toolbar">
-    <button class="btn primary" id="save">Save Tiles</button>
-    <button class="btn" id="add">Add Tile</button>
-    <button class="btn" id="download">Export JSON</button>
-    <label class="btn" for="file">Import JSON</label><input id="file" type="file" accept="application/json" class="hidden">
-    <a class="btn" href="./index.html">Back to Hub</a>
-    <small class="mono" id="status"></small>
-  </div>
-  <div class="card">
-    <div class="flex"><strong>Tiles</strong><small class="mono">Autosaves locally as you type</small></div>
-    <div id="list" class="list"></div>
-  </div>
-  <footer>
-    <p class="note">Server save posts to <code>API_SAVE_ENDPOINT</code>. Configure your serverless function and set the constant below.</p>
-  </footer>
-</div>
-<script>
-const API_SAVE_ENDPOINT = 'https://YOUR_SERVER/save-tiles'; // Replace if you deploy serverless save
-const LS_KEY = 'pacx_canvas_admin_autosave_v1';
-const list = document.getElementById('list');
-const statusEl = document.getElementById('status');
 
-function isValidUrl(s){ try{ new URL(s); return true; } catch { return false; } }
-function tileRow(t){
-  const div = document.createElement('div');
-  div.className = 'item';
-  div.draggable = true;
-  div.innerHTML = `
-    <div class="flex">
-      <span class="drag">⇅ Drag</span>
-      <button class="btn" data-action="remove">Remove</button>
+    <div class="bar">
+      <button class="btn" id="save">Save Tiles</button>
+      <button class="btn" id="add">Add Tile</button>
+      <button class="btn" id="export">Export JSON</button>
+      <label class="btn" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+        Import JSON <input id="file" type="file" accept=".json" hidden/>
+      </label>
+      <a class="btn" href="hub.html">Back to Hub</a>
     </div>
-    <div class="row">
-      <div>
-        <label>Title</label>
-        <input class="tile-input" name="title" value="${t.title || ''}">
-      </div>
-      <div>
-        <label>Canvas URL</label>
-        <input class="tile-input" name="url" value="${t.url || ''}">
-      </div>
-      <div>
-        <label>Description (optional)</label>
-        <textarea class="tile-input" name="description" rows="2">${t.description || ''}</textarea>
-      </div>
-      <div><small class="mono">${isValidUrl(t.url) ? '✓ URL OK' : '⛔ Invalid URL'}</small></div>
-    </div>`;
-  return div;
-}
-function readForm(){ return Array.from(list.querySelectorAll('.item')).map(item => ({
-  title: item.querySelector('input[name="title"]').value.trim(),
-  url: item.querySelector('input[name="url"]').value.trim(),
-  description: item.querySelector('textarea[name="description"]').value.trim()
-})); }
-function writeAutosave(data){ localStorage.setItem(LS_KEY, JSON.stringify(data)); statusEl.textContent = 'Autosaved'; }
-function loadAutosave(){ try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; } }
-function render(data){ list.innerHTML = ''; data.forEach(t=> list.appendChild(tileRow(t))); }
-async function loadInitial(){
-  const auto = loadAutosave();
-  if (auto && auto.length) { render(auto); return; }
-  try { const res = await fetch('./data/canvases.json?ts=' + Date.now()); const d = await res.json(); render(d.tiles || []);} catch { render([]); }
-}
-let dragSrc;
-list.addEventListener('dragstart', e=>{ dragSrc = e.target.closest('.item'); });
-list.addEventListener('dragover', e=>{
-  e.preventDefault();
-  const cur = e.target.closest('.item');
-  if (!cur || cur === dragSrc) return;
-  const bb = cur.getBoundingClientRect();
-  const after = (e.clientY - bb.top) > (bb.height/2);
-  list.insertBefore(dragSrc, after ? cur.nextSibling : cur);
-});
-list.addEventListener('drop', ()=> scheduleAutosave());
-list.addEventListener('click', e=>{ const btn = e.target.closest('button[data-action="remove"]'); if (btn) { btn.closest('.item').remove(); scheduleAutosave(); }});
-list.addEventListener('input', e=>{ if (e.target.matches('.tile-input')) scheduleAutosave(); });
-list.addEventListener('change', e=>{ if (e.target.matches('.tile-input')) scheduleAutosave(); });
-let tmr;
-function scheduleAutosave(){ clearTimeout(tmr); tmr = setTimeout(()=> writeAutosave(readForm()), 250); }
-document.getElementById('add').addEventListener('click', ()=>{ const data = readForm(); data.push({title:'Untitled',url:'',description:''}); render(data); scheduleAutosave(); });
-document.getElementById('download').addEventListener('click', ()=>{ const out={updatedAt:new Date().toISOString(), tiles: readForm()}; const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='canvases.json'; a.click(); });
-document.getElementById('file').addEventListener('change', e=>{ const file=e.target.files[0]; if (!file) return; const reader=new FileReader(); reader.onload=()=>{ try{ const obj=JSON.parse(reader.result); render(obj.tiles||[]); writeAutosave(obj.tiles||[]);}catch{ alert('Invalid JSON'); }}; reader.readAsText(file); });
-document.getElementById('save').addEventListener('click', async ()=>{ const payload={updatedAt:new Date().toISOString(), tiles: readForm()}; statusEl.textContent='Saving...'; try{ const res=await fetch(API_SAVE_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!res.ok) throw new Error('Server error'); statusEl.textContent='Saved to server'; localStorage.removeItem(LS_KEY);}catch(e){ statusEl.textContent='Save failed (server). Export JSON as backup.'; }});
-loadInitial();
-</script>
-</body></html>
-  ...
+
+    <div id="list" class="list" aria-live="polite"></div>
+
+    <div class="foot">Autosaves locally as you type • Export JSON to commit <code>/data/canvases.json</code></div>
+  </div>
+
   <script>
-    /* (unchanged admin script) */
+    // --- state
+    let data = { updatedAt: '', titles: [] };
+
+    // --- elements
+    const list = document.getElementById('list');
+
+    function validUrl(s){ try{ new URL(s); return true; }catch{ return false; } }
+
+    function render(){
+      list.innerHTML = '';
+      data.titles.forEach((t, idx)=>{
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.draggable = true;
+        item.innerHTML = `
+          <div class="drag" title="Drag to reorder">↕ Drag</div>
+          <div class="row"><label>Title</label><input class="title" type="text" value="${t.title||''}"/></div>
+          <div class="row"><label>Canvas URL</label><input class="url" type="text" value="${t.url||''}"/></div>
+          <div class="row"><label>Description</label><textarea class="desc">${t.description||''}</textarea></div>
+          <div class="row"><span></span>
+            <div>
+              <span class="${validUrl(t.url)?'ok':'warn'}">${validUrl(t.url)?'✓ URL OK':'⚠ URL invalid'}</span>
+              <button class="btn remove" style="float:right">Remove</button>
+            </div>
+          </div>
+        `;
+        // handlers
+        item.querySelector('.title').addEventListener('input', e=>{ t.title = e.target.value; autosave(); });
+        item.querySelector('.url').addEventListener('input', e=>{ t.url = e.target.value; autosave(); render(); });
+        item.querySelector('.desc').addEventListener('input', e=>{ t.description = e.target.value; autosave(); });
+        item.querySelector('.remove').addEventListener('click', ()=>{ data.titles.splice(idx,1); autosave(); render(); });
+
+        // drag
+        item.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', idx.toString()); });
+        item.addEventListener('dragover', e=>e.preventDefault());
+        item.addEventListener('drop', e=>{
+          e.preventDefault();
+          const from = +e.dataTransfer.getData('text/plain');
+          const to   = idx;
+          if (from===to) return;
+          const [moved] = data.titles.splice(from,1);
+          data.titles.splice(to,0,moved);
+          autosave(); render();
+        });
+
+        list.appendChild(item);
+      });
+    }
+
+    function autosave(){
+      localStorage.setItem('pacx-tiles', JSON.stringify(data));
+    }
+    function loadInitial(){
+      const cached = localStorage.getItem('pacx-tiles');
+      if (cached){ data = JSON.parse(cached); render(); return; }
+      fetch('./data/canvases.json').then(r=>r.json()).then(json=>{ data=json; render(); })
+      .catch(()=>{ data = {updatedAt:'', titles:[]}; render(); });
+    }
+
+    // buttons
+    document.getElementById('add').addEventListener('click', ()=>{
+      data.titles.push({ title:'Untitled', url:'', description:'' });
+      autosave(); render();
+    });
+
+    document.getElementById('export').addEventListener('click', ()=>{
+      const payload = {...data, updatedAt:new Date().toISOString()};
+      const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'canvases.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    document.getElementById('file').addEventListener('change', (e)=>{
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { try{ data = JSON.parse(reader.result); }catch{ alert('Invalid JSON'); return; } autosave(); render(); }
+      reader.readAsText(file);
+    });
+
+    document.getElementById('save').addEventListener('click', ()=>{
+      const payload = {...data, updatedAt:new Date().toISOString()};
+      localStorage.setItem('pacx-tiles', JSON.stringify(payload));
+      alert('Saved to your browser. Click “Export JSON” to download and commit /data/canvases.json.');
+    });
+
+    loadInitial();
   </script>
 
   <!-- PACx Feedback + Back -->
