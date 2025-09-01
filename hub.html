@@ -4,77 +4,80 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PACx Demo Hub</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    :root{ --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1; --mint:#56f3a6; --border:#2a2f4a; }
+    *{ box-sizing:border-box }
+    body{ margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
+    .wrap{ max-width:1080px; margin:0 auto; padding:28px 18px 80px; }
+    .hdr{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+    .dot{ width:12px; height:12px; background:#29eb7f; border-radius:6px; display:inline-block; }
+    .title{ font-size:28px; font-weight:900; color:var(--mint) }
+    .toolbar{ display:flex; gap:10px; align-items:center; margin:8px 0 18px }
+    .btn{ background:#0f1223; color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px 12px; text-decoration:none; }
+    .grid{ display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:8px; }
+    .card{ display:block; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px; color:inherit; text-decoration:none; }
+    .card h3{ margin:0 0 6px; font-size:18px; }
+    .sub{ color:var(--sub); min-height:36px; }
+    .open{ display:inline-block; margin-top:10px; color:#cfe7ff; text-decoration:underline; }
+    .note{ color:var(--sub); font-size:12px; border-top:1px dashed var(--border); padding-top:10px; margin-top:20px; }
+  </style>
 </head>
-    ...
-  <script>
-    const grid = document.getElementById('grid');
-    const last = document.getElementById('last-updated');
-    /* (unchanged hub script) */
-  </script>
-
-  <!-- PACx Feedback + Back (Back hidden on Hub) -->
-  <script>
-    window.PACX_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
-    // On the Hub we don't need a back arrow; script auto-detects and hides it
-  </script>
-  <script src="./pacx-feedback.js" defer></script>
-</body>
-</html>
 <body>
   <div class="wrap">
-    <div class="header">
-      <div class="hdot"></div>
-      <h1>PACx Demo’s</h1>
+    <div class="hdr">
+      <span class="dot"></span>
+      <div class="title">PACx Demo’s</div>
     </div>
 
     <div class="toolbar">
-      <button id="refresh" class="btn ghost">Refresh</button>
-      <a class="btn ghost" href="./admin.html">Admin</a>
-      <small id="last-updated" class="small"></small>
+      <a class="btn" id="refresh" href="#">Refresh</a>
+      <a class="btn" href="admin.html">Admin</a>
+      <small id="last" style="color:var(--sub)"></small>
     </div>
 
-    <div id="grid" class="grid"></div>
+    <div id="grid" class="grid" aria-live="polite"></div>
 
-    <footer style="margin-top:18px">
-      <p class="note">Tiles are read from <code>/data/canvases.json</code>. If a link is invalid, open Admin to update.</p>
-    </footer>
+    <p class="note">Tiles are read from <code>/data/canvases.json</code>. If a link is invalid, open Admin to update.</p>
   </div>
 
   <script>
-  const grid = document.getElementById('grid');
-  const last = document.getElementById('last-updated');
+    const grid = document.getElementById('grid');
+    const last = document.getElementById('last');
+    document.getElementById('refresh').addEventListener('click', (e)=>{ e.preventDefault(); load(); });
 
-  function isValidUrl(s){ try{ new URL(s); return true; } catch { return false; } }
-
-  function tileEl(t){
-    const a = document.createElement('a');
-    a.className = 'tile-link'; a.target = '_blank'; a.rel = 'noopener noreferrer';
-    if(isValidUrl(t.url)){ a.href = t.url; a.ariaLabel = `Open ${t.title}`; a.textContent = 'Open'; }
-    else { a.href = '#'; a.textContent = 'Fix URL'; }
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `<h3>${t.title}</h3><p class="small">${t.description||''}</p>`;
-    card.appendChild(a);
-    return card;
-  }
-
-  async function load(){
-    grid.textContent = 'Loading…';
-    try{
-      const res = await fetch('./data/canvases.json?cache=' + Date.now());
-      const json = await res.json();
-      grid.textContent = '';
-      json.tiles.forEach(t => grid.appendChild(tileEl(t)));
-      last.textContent = 'Updated ' + (json.updatedAt || '');
-    }catch(e){
-      grid.textContent = 'Failed to load tiles.';
-      console.error(e);
+    function card(t){
+      const a = document.createElement('a');
+      a.className = 'card';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.href = t.url || '#';
+      a.innerHTML = `
+        <h3>${t.title || 'Untitled'}</h3>
+        <div class="sub">${t.description || ''}</div>
+        <span class="open">Open</span>
+      `;
+      if (!/^https?:\/\//i.test(t.url||'')) { a.href = '#'; a.addEventListener('click', (e)=>e.preventDefault()); }
+      return a;
     }
-  }
-
-  document.getElementById('refresh').onclick = load;
-  load();
+    async function load(){
+      try{
+        const res = await fetch('./data/canvases.json', {cache:'no-store'});
+        const data = await res.json();
+        grid.innerHTML = '';
+        (data.titles||[]).forEach(t => grid.appendChild(card(t)));
+        last.textContent = data.updatedAt ? `Updated ${data.updatedAt}` : '';
+      }catch(err){
+        grid.innerHTML = '<div class="sub">Could not load canvases.json</div>';
+      }
+    }
+    load();
   </script>
+
+  <!-- PACx Feedback + Back (back arrow is hidden on hub automatically) -->
+  <script>
+    // On hub we *don’t* want a back arrow; leave PACX_BACK_HREF undefined here.
+    window.PACX_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
+  </script>
+  <script src="./pacx-feedback.js" defer></script>
 </body>
 </html>
