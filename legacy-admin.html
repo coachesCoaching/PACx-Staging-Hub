@@ -1,96 +1,129 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>PACx Admin — Canvas Tiles</title>
-  <style>
-    :root{--bg:#0f1223;--panel:#161a2e;--text:#eaf0ff;--sub:#a8b1d1;--mint:#56f3a6;--border:#2a2f4a}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 100px}
-    .hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-    .chip{background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:12px;font-weight:700}
-    .btn{background:var(--mint);color:#02100a;font-weight:800;padding:10px 14px;border:none;border-radius:10px;cursor:pointer}
-    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
-    .list{display:grid;gap:12px}
-    .item{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
-    .row{display:flex;gap:10px;align-items:center;margin:6px 0}
-    .row label{width:120px;color:var(--sub)}
-    .row input,.row textarea{flex:1;background:#0d1427;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px}
-    .drag{cursor:grab;user-select:none;padding:4px 8px;border:1px dashed var(--border);border-radius:8px;color:var(--sub)}
-    .ok{color:#8af7c9;font-weight:700;margin-left:8px}
-    .bad{color:#ff8b8b;font-weight:700;margin-left:8px}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PACx Legacy Admin</title>
+<style>
+  :root{--bg:#0f1223;--panel:#161a2e;--text:#eaf0ff;--sub:#a8b1d1;--mint:#56f3a6;--border:#2a2f4a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 20px 80px}
+  .bar{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .btn{background:var(--mint);color:#02100a;font-weight:800;padding:10px 14px;border:none;border-radius:10px;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+  .list{display:flex;flex-direction:column;gap:14px}
+  .tile{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+  .row{display:flex;gap:10px;margin:6px 0}
+  .row input,.row textarea{flex:1;background:#0b0e20;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px}
+  .row textarea{min-height:66px;resize:vertical}
+  .actions{display:flex;gap:10px}
+  code{background:#0b0e20;padding:2px 6px;border-radius:8px;border:1px solid var(--border)}
+  .small{color:var(--sub)}
+</style>
 </head>
 <body>
   <div class="wrap">
-    <div class="hdr">
-      <a href="hub.html" class="btn ghost">← Back to Hub</a>
-      <div class="chip">Canvas Tiles</div>
-      <button id="add" class="btn ghost">Add Tile</button>
-      <button id="save" class="btn">Export JSON</button>
-      <small class="chip" style="font-weight:600">Drag to reorder. Paste your ChatGPT canvas share URLs.</small>
+    <div class="bar">
+      <a class="btn ghost" href="legacy-hub.html">← Back to Legacy Hub</a>
+      <button id="add" class="btn">Add Tile</button>
+      <button id="export" class="btn">Export JSON</button>
+      <button id="load" class="btn ghost">Load Current JSON</button>
+      <div style="flex:1"></div>
+      <span class="small">File: <code>/data/legacy-canvases.json</code></span>
     </div>
+
     <div id="list" class="list"></div>
   </div>
 
-  <script>
-    const list  = document.getElementById('list');
-    const add   = document.getElementById('add');
-    const save  = document.getElementById('save');
-    let tiles = JSON.parse(localStorage.getItem('pacx_tiles')||'[]');
-    const emptyTile = ()=>({title:'',url:'',description:''});
-    const persist = ()=>localStorage.setItem('pacx_tiles',JSON.stringify(tiles));
-    const validateUrl=s=>{ try{ const u=new URL(s); return u.protocol==='https:'; }catch{ return false; } };
+<script>
+  const JSON_PATH = 'data/legacy-canvases.json';
+  const list = document.getElementById('list');
 
-    function render(){
-      list.innerHTML='';
-      tiles.forEach((t,i)=>{
-        const el=document.createElement('div'); el.className='item'; el.draggable=true;
-        el.innerHTML=`
-          <div class="row"><span class="drag">↕ Drag</span>
-            <button data-action="remove" class="btn ghost" style="margin-left:8px">Remove</button></div>
-          <div class="row"><label>Title</label><input data-k="title" value="${t.title||''}" placeholder="Tile title"></div>
-          <div class="row"><label>Canvas URL</label>
-            <input data-k="url" value="${t.url||''}" placeholder="https://chatgpt.com/canvas/shared/...">
-            <span class="${validateUrl(t.url)?'ok':'bad'}">${validateUrl(t.url)?'URL OK':'Fix URL'}</span>
-          </div>
-          <div class="row"><label>Description</label><textarea data-k="description" rows="2" placeholder="Optional…">${t.description||''}</textarea></div>
-        `;
-        // drag + drop
-        el.addEventListener('dragstart', e=>e.dataTransfer.setData('text/plain', i));
-        el.addEventListener('dragover', e=>{e.preventDefault(); el.style.outline='1px dashed #37b9f1';});
-        el.addEventListener('dragleave', ()=>el.style.outline='');
-        el.addEventListener('drop', e=>{
-          e.preventDefault(); el.style.outline='';
-          const from=+e.dataTransfer.getData('text/plain'); const to=i;
-          if(from===to) return; const item=tiles.splice(from,1)[0]; tiles.splice(to,0,item); persist(); render();
-        });
-        // inputs
-        el.addEventListener('input', e=>{
-          const k=e.target.dataset.k; if(!k) return; tiles[i][k]=e.target.value; persist();
-          if(k==='url'){ const b=el.querySelector('span.ok,span.bad'); if(b){const ok=validateUrl(e.target.value); b.className=ok?'ok':'bad'; b.textContent=ok?'URL OK':'Fix URL';}}
-        });
-        el.querySelector('[data-action="remove"]').addEventListener('click',()=>{tiles.splice(i,1); persist(); render();});
-        list.appendChild(el);
-      });
-    }
+  let tiles = [];
 
-    add.addEventListener('click',()=>{tiles.push(emptyTile()); persist(); render();});
-    save.addEventListener('click',()=>{
-      const payload={updatedAt:new Date().toISOString(), tiles};
-      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='canvases.json'; a.click(); URL.revokeObjectURL(a.href);
-    });
-
+  document.getElementById('add').onclick = () => {
+    tiles.push({title:'', url:'', description:''});
     render();
-  </script>
+  };
 
-  <script>
-    window.PACX_FEEDBACK_URL='https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
-    window.PACX_BACK_HREF='hub.html';
-  </script>
-  <script src="./pacx-feedback.js" defer></script>
+  document.getElementById('export').onclick = () => {
+    const payload = {
+      updatedAt: new Date().toISOString(),
+      tiles
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: 'legacy-canvases.json'
+    });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  document.getElementById('load').onclick = async () => {
+    try{
+      const res = await fetch(`${JSON_PATH}?__=${Date.now()}`, {cache:'no-store'});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      tiles = Array.isArray(data.tiles) ? data.tiles : [];
+    }catch(e){
+      tiles = [];
+      console.warn('Could not load existing JSON; starting blank.', e);
+    }
+    render();
+  };
+
+  function move(idx, dir){
+    const ni = idx + dir;
+    if (ni < 0 || ni >= tiles.length) return;
+    [tiles[idx], tiles[ni]] = [tiles[ni], tiles[idx]];
+    render();
+    window.scrollTo({top: document.getElementById(`tile-${ni}`).offsetTop-12, behavior:'smooth'});
+  }
+
+  function del(idx){
+    tiles.splice(idx, 1);
+    render();
+  }
+
+  function render(){
+    list.innerHTML = '';
+    tiles.forEach((t, i) => {
+      const div = document.createElement('div');
+      div.className = 'tile';
+      div.id = `tile-${i}`;
+      div.innerHTML = `
+        <div class="actions">
+          <button class="btn ghost" onclick="move(${i},-1)">↑</button>
+          <button class="btn ghost" onclick="move(${i},+1)">↓</button>
+          <button class="btn ghost" onclick="del(${i})">Remove</button>
+        </div>
+        <div class="row"><input placeholder="Title" value="${esc(t.title)}" oninput="tiles[${i}].title=this.value"/></div>
+        <div class="row"><input placeholder="Canvas URL (https://chatgpt.com/canvas/shared/...)" value="${esc(t.url)}" oninput="tiles[${i}].url=this.value"/></div>
+        <div class="row"><textarea placeholder="Short description" oninput="tiles[${i}].description=this.value">${esc(t.description||'')}</textarea></div>
+        <div class="small">${valid(t.url) ? 'URL OK' : 'Check URL'}</div>
+      `;
+      list.appendChild(div);
+    });
+    if(!tiles.length){
+      const empty = document.createElement('div');
+      empty.className='tile';
+      empty.innerHTML = `<div class="row small">No tiles yet. Click <strong>Add Tile</strong>, then <strong>Export JSON</strong> and commit the downloaded file to <code>${JSON_PATH}</code>.</div>`;
+      list.appendChild(empty);
+    }
+  }
+
+  function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
+  function valid(u=''){try{const x=new URL(u);return /^https?:$/.test(x.protocol)}catch{return false}}
+
+  // expose for inline handlers
+  window.move = move;
+  window.del = del;
+
+  // boot with whatever is currently in the JSON (if present)
+  document.getElementById('load').click();
+</script>
 </body>
 </html>
