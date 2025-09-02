@@ -2,34 +2,49 @@
   "updatedAt": "2025-09-01T16:10:00Z",
   "tiles": [
     {
-{
-  "title": "Ideal Client WOW! Segmentation",
-  "url": "./data/demos/viewer.html?src=../raw/ideal-client-wow.html&title=Ideal%20Client%20WOW",
-  "description": "Public demo from Canvas export"
-}
+      "title": "Pacx – Setup & Outreach (demo)",
+      "url": "PASTE_CHATGPT_CANVAS_LINK_HERE",
+      "description": "Demo setup and outreach flow."
     },
     {
-      "title": "PACx Minimal Game Flow — MVP",
-      "url": "https://chatgpt.com/canvas/shared/REPLACE_ME",
-      "description": "Shared canvas link ending …"
+      "title": "Pacx Portal – Pro Advisor Coach View (v2)",
+      "url": "PASTE_CHATGPT_CANVAS_LINK_HERE",
+      "description": "Coach-facing portal view."
     },
     {
-      {
-  "title": "Ideal Client WOW! Segmentation",
-  "url": "./data/demos/viewer.html?src=../raw/ideal-client-wow.html&title=Ideal%20Client%20WOW",
-  "description": "Public demo from Canvas export"
-}
-
+      "title": "Beginner + Experienced: Gap To Pacx Map",
+      "url": "PASTE_CHATGPT_CANVAS_LINK_HERE",
+      "description": "Gap-to-PACx progression map."
     },
     {
-      "title": "PACx Onboarding Blueprint v1.0",
-      "url": "https://chatgpt.com/canvas/shared/REPLACE_ME",
-      "description": "The blue print of flow for PACx"
+      "title": "Pacx Comp Calculator",
+      "url": "PASTE_CHATGPT_CANVAS_LINK_HERE",
+      "description": "Comp calculator demo."
     },
     {
-      "title": "PAC Selection",
-      "url": "https://chatgpt.com/canvas/shared/REPLACE_ME",
-      "description": ""
+      "title": "Sow Helper (UI)",
+      "url": "PASTE_CHATGPT_CANVAS_LINK_HERE",
+      "description": "Quick sow helper UI."
+    },
+    {
+      "title": "Ideal Client Wow Segmentation — Tool (v1)",
+      "url": "PASTE_CHATGPT_CANVAS_LINK_HERE",
+      "description": "Segment and wow ideal clients."
+    },
+    {
+      "title": "Pacx Minimal Game Flow",
+      "url": "PASTE_CHATGPT_CANVAS_LINK_HERE",
+      "description": "Minimal game flow walkthrough."
+    },
+    {
+      "title": "Pacx Mobile — Tap To Run (v2)",
+      "url": "PASTE_CHATGPT_CANVAS_LINK_HERE",
+      "description": "Mobile tap-to-run demo."
+    },
+    {
+      "title": "Pacx Onboarding Blueprint v1",
+      "url": "PASTE_CHATGPT_CANVAS_LINK_HERE",
+      "description": "Onboarding blueprint overview."
     }
   ]
 }
