@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PACx Demo Hub — Legacy</title>
+  <style>
+    :root{
+      --bg:#0f1223; --panel:#161a2e; --text:#eaf0ff; --sub:#a8b1d1;
+      --mint:#56f3a6; --accent:#37b9f1; --border:#2a2f4a; --danger:#ff8b8b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 100px}
+    .bar{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:12px;font-weight:700}
+    .spacer{flex:1}
+    .btn{background:var(--mint);color:#02100a;font-weight:800;padding:10px 14px;border:none;border-radius:10px;cursor:pointer}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:10px}
+    .card{display:block;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;color:inherit;text-decoration:none;transition:transform .12s ease}
+    .card:hover{transform:translateY(-1px)}
+    .title{font-size:18px;font-weight:900;margin:0 0 6px}
+    .sub{color:var(--sub);min-height:24px}
+    .open{display:inline-block;margin-top:12px;color:#cfe7ff;text-decoration:underline}
+    footer{margin-top:18px;color:var(--sub)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="bar">
+      <div class="chip">
+        <span style="width:12px;height:12px;background:#35d07f;border-radius:50%;display:inline-block"></span>
+        PACx Demo’s
+      </div>
+      <button id="refresh" class="btn ghost">Refresh</button>
+      <a href="admin.html" class="btn ghost">Admin</a>
+      <div class="spacer"></div>
+      <small id="last" class="chip" style="font-weight:600">Updated —</small>
+    </div>
+
+    <div id="grid" class="grid"></div>
+
+    <footer>
+      <p>Tiles are read from <code>/data/canvases.json</code>. If a link is invalid, open <strong>Admin</strong> and export a new JSON.</p>
+    </footer>
+  </div>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const last = document.getElementById('last');
+    const pretty = s => new Date(s).toISOString().replace('T',' ').replace('Z','Z');
+
+    async function load() {
+      grid.innerHTML = '';
+      try {
+        // cache-bust to avoid stale JSON from GitHub Pages
+        const res = await fetch('data/canvases.json?__=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        last.textContent = `Updated ${data.updatedAt ? pretty(data.updatedAt) : '(unknown)'}`;
+
+        const tiles = Array.isArray(data.tiles) ? data.tiles : [];
+        if (tiles.length === 0) {
+          grid.innerHTML = `<div class="card">
+            <div class="title">No tiles yet</div>
+            <div class="sub">Open Admin → Add Tile → Export JSON → upload to <code>/data/canvases.json</code>.</div>
+          </div>`;
+          return;
+        }
+
+        tiles.forEach(t => grid.appendChild(renderCard(t)));
+      } catch (e) {
+        console.error(e);
+        last.textContent = 'Updated — (error loading)';
+        grid.innerHTML = `<div class="card">
+          <div class="title" style="color:var(--danger)">Could not load canvases.json</div>
+          <div class="sub">Ensure <code>/data/canvases.json</code> exists and is valid JSON.</div>
+        </div>`;
+      }
+    }
+
+    function renderCard(t) {
+      const a = document.createElement('a');
+      a.className = 'card';
+      a.href = t.url || '#';
+
+      // Open external links in a new tab (keeps Hub open)
+      if (/^https?:\/\//i.test(a.href)) a.target = '_blank', a.rel = 'noopener';
+
+      a.innerHTML = `
+        <h3 class="title">${t.title || 'Untitled'}</h3>
+        <div class="sub">${t.description || 'Shared canvas link ending …'}</div>
+        <span class="open">Open</span>`;
+      return a;
+    }
+
+    document.getElementById('refresh').addEventListener('click', load);
+    load();
+  </script>
+
+  <!-- PACx feedback (global) -->
+  <script>
+    // Set your feedback target; the widget reads this if provided
+    window.PACX_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/REPLACE_ME/viewform?embedded=true';
+  </script>
+  <script src="./pacx-feedback.js" defer></script>
+</body>
+</html>
